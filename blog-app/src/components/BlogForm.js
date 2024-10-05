@@ -1,7 +1,7 @@
 // src/components/BlogForm.js
 import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
 import {
   TextField,
   Button,
@@ -10,15 +10,24 @@ import {
   Alert,
   Typography,
 } from '@mui/material';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const BlogForm = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [author, setAuthor] = useState('');
+  const [image, setImage] = useState(null);
 
   // New States for Handling Loading, Success, and Errors
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  const handleImageChange = (e) => {
+    if (e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,22 +37,40 @@ const BlogForm = () => {
     setError('');
 
     // Simple Client-side Validation
-    if (!title.trim() || !content.trim()) {
-      setError('Both Title and Content are required.');
+    if (!title.trim() || !content.trim() || !author.trim()) {
+      setError('Title, Content, and Author are required.');
       return;
     }
 
     setLoading(true); // Start Loading
 
     try {
+      let imageUrl = '';
+
+      // If an image is selected, upload it to Firebase Storage
+      if (image) {
+        const imageRef = ref(storage, `blog_images/${Date.now()}_${image.name}`);
+        const snapshot = await uploadBytes(imageRef, image);
+        imageUrl = await getDownloadURL(snapshot.ref);
+      }
+
+      // Add the blog post to Firestore
       await addDoc(collection(db, 'posts'), {
         title: title.trim(),
         content: content.trim(),
+        author: author.trim(),
+        imageUrl: imageUrl || '', // Store empty string if no image
         createdAt: serverTimestamp(),
       });
+
       setSuccess('Post added successfully!');
       setTitle('');
       setContent('');
+      setAuthor('');
+      setImage(null);
+
+      // Optionally, you can reset the file input field
+      e.target.reset();
     } catch (err) {
       console.error('Error adding document: ', err);
       setError('Failed to add post. Please try again.');
@@ -99,6 +126,30 @@ const BlogForm = () => {
         sx={{ mb: 2 }}
         inputProps={{ 'aria-label': 'Post Content' }}
       />
+      <TextField
+        label="Author's Name"
+        variant="outlined"
+        fullWidth
+        value={author}
+        onChange={(e) => setAuthor(e.target.value)}
+        required
+        sx={{ mb: 2 }}
+        inputProps={{ 'aria-label': 'Author Name' }}
+      />
+      <Button variant="contained" component="label" sx={{ mb: 2 }}>
+        Upload Image
+        <input
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleImageChange}
+        />
+      </Button>
+      {image && (
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Selected Image: {image.name}
+        </Typography>
+      )}
       <Box sx={{ position: 'relative', display: 'inline-flex' }}>
         <Button
           type="submit"
