@@ -1,9 +1,10 @@
+// src/components/BlogForm.js
 import React, { useState } from 'react';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { TextField, Button } from '@mui/material';
+import { TextField, Button, Box } from '@mui/material';
 
-const AddPost = () => {
+const BlogForm = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
@@ -17,36 +18,38 @@ const AddPost = () => {
       });
       setTitle('');
       setContent('');
-    } catch (err) {
-      console.error('Error adding document: ', err);
+    } catch (error) {
+      console.error('Error adding document: ', error);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 4 }}>
       <TextField
         label="Title"
+        variant="outlined"
+        fullWidth
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         required
-        fullWidth
-        margin="normal"
+        sx={{ mb: 2 }}
       />
       <TextField
         label="Content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        required
+        variant="outlined"
         fullWidth
         multiline
         rows={4}
-        margin="normal"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        required
+        sx={{ mb: 2 }}
       />
-      <Button variant="contained" color="primary" type="submit">
+      <Button type="submit" variant="contained" color="primary">
         Add Post
       </Button>
-    </form>
+    </Box>
   );
 };
 
-export default AddPost;
+export default BlogForm;
