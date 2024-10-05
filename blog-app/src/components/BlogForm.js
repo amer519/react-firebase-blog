@@ -9,6 +9,9 @@ import {
   CircularProgress,
   Alert,
   Typography,
+  InputLabel,
+  FormControl,
+  FormHelperText,
 } from '@mui/material';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -17,15 +20,34 @@ const BlogForm = () => {
   const [content, setContent] = useState('');
   const [author, setAuthor] = useState('');
   const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null); // For image preview
 
-  // New States for Handling Loading, Success, and Errors
+  // States for handling loading, success, and error messages
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
   const handleImageChange = (e) => {
-    if (e.target.files[0]) {
-      setImage(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Optional: Validate file type and size
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+
+      if (!validTypes.includes(file.type)) {
+        setError('Only JPEG, PNG, GIF, WEBP, and AVIF images are allowed.');
+        return;
+      }
+
+      if (file.size > maxSize) {
+        setError('Image size should not exceed 5MB.');
+        return;
+      }
+
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file)); // Set image preview
+      setError(''); // Clear any previous errors
     }
   };
 
@@ -36,7 +58,7 @@ const BlogForm = () => {
     setSuccess('');
     setError('');
 
-    // Simple Client-side Validation
+    // Client-side Validation
     if (!title.trim() || !content.trim() || !author.trim()) {
       setError('Title, Content, and Author are required.');
       return;
@@ -49,8 +71,8 @@ const BlogForm = () => {
 
       // If an image is selected, upload it to Firebase Storage
       if (image) {
-        const imageRef = ref(storage, `blog_images/${Date.now()}_${image.name}`);
-        const snapshot = await uploadBytes(imageRef, image);
+        const storageRef = ref(storage, `blog_images/${Date.now()}_${image.name}`);
+        const snapshot = await uploadBytes(storageRef, image);
         imageUrl = await getDownloadURL(snapshot.ref);
       }
 
@@ -68,12 +90,17 @@ const BlogForm = () => {
       setContent('');
       setAuthor('');
       setImage(null);
+      setImagePreview(null);
 
-      // Optionally, you can reset the file input field
+      // Reset the file input field
       e.target.reset();
     } catch (err) {
       console.error('Error adding document: ', err);
-      setError('Failed to add post. Please try again.');
+      if (err.code === 'storage/unauthorized') {
+        setError('You do not have permission to upload images.');
+      } else {
+        setError('Failed to add post. Please try again.');
+      }
     } finally {
       setLoading(false); // End Loading
     }
@@ -114,6 +141,7 @@ const BlogForm = () => {
         sx={{ mb: 2 }}
         inputProps={{ 'aria-label': 'Post Title' }}
       />
+
       <TextField
         label="Content"
         variant="outlined"
@@ -126,6 +154,7 @@ const BlogForm = () => {
         sx={{ mb: 2 }}
         inputProps={{ 'aria-label': 'Post Content' }}
       />
+
       <TextField
         label="Author's Name"
         variant="outlined"
@@ -134,22 +163,37 @@ const BlogForm = () => {
         onChange={(e) => setAuthor(e.target.value)}
         required
         sx={{ mb: 2 }}
-        inputProps={{ 'aria-label': 'Author Name' }}
+        inputProps={{ 'aria-label': "Author's Name" }}
       />
-      <Button variant="contained" component="label" sx={{ mb: 2 }}>
-        Upload Image
-        <input
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleImageChange}
-        />
-      </Button>
-      {image && (
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          Selected Image: {image.name}
-        </Typography>
+
+      {/* Image Upload Field with Preview */}
+      <FormControl fullWidth sx={{ mb: 2 }}>
+        <InputLabel htmlFor="image-upload">Upload Image</InputLabel>
+        <Button
+          variant="contained"
+          component="label"
+          color="secondary"
+          sx={{ mt: 1 }}
+          aria-label="Upload Image"
+        >
+          Choose Image
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleImageChange}
+          />
+        </Button>
+        {image && <FormHelperText>{image.name}</FormHelperText>}
+      </FormControl>
+
+      {/* Image Preview */}
+      {imagePreview && (
+        <Box sx={{ mb: 2 }}>
+          <img src={imagePreview} alt="Selected" style={{ maxWidth: '100%', height: 'auto' }} />
+        </Box>
       )}
+
       <Box sx={{ position: 'relative', display: 'inline-flex' }}>
         <Button
           type="submit"
