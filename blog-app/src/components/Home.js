@@ -12,7 +12,8 @@ import {
     Card, 
     CardMedia, 
     CardContent 
-  } from '@mui/material';
+} from '@mui/material';
+import ReactMarkdown from 'react-markdown';
 
 const Home = () => {
   const [blog, setBlog] = useState(null);
@@ -81,9 +82,12 @@ const Home = () => {
           <Typography variant="subtitle1" color="text.secondary" gutterBottom>
             By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
           </Typography>
-          <Typography variant="body1" paragraph>
+
+          {/* Display Markdown content properly */}
+          <ReactMarkdown>
             {blog.content.length > 200 ? `${blog.content.substring(0, 200)}...` : blog.content}
-          </Typography>
+          </ReactMarkdown>
+
           <Button
             component={Link}
             to={`/blogs/${blog.id}`}

@@ -8,102 +8,91 @@ import BlogPage from './components/BlogPage';
 import Login from './components/Login';
 import Logout from './components/Logout';
 import ProtectedRoute from './components/ProtectedRoute';
-import { Container, Typography, Button, Box } from '@mui/material';
+import { Container, Box, Button } from '@mui/material';
 import { useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from '@mui/material/styles'; // Import ThemeProvider
+import theme from './theme'; // Import your theme
+import './App.css';
 
 const App = () => {
   const { currentUser } = useAuth(); // Access the current user's authentication state
 
   return (
-    <Router>
-      <Container maxWidth="lg">
-        {/* App Header */}
-        <Box sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
-          <Typography variant="h3" component="h1" gutterBottom>
-            My Professional Blog
-          </Typography>
-        </Box>
+    <ThemeProvider theme={theme}>
+      <Router>
+        <div className="App">
+          {/* Professional Header */}
+          <header className="App-header">
+            <Link to="/" className="App-title">Simba</Link>
+          </header>
 
-        {/* Navigation Buttons */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 2, // Space between buttons
-            mb: 4,
-          }}
-        >
-          {/* Home Button */}
-          <Button
-            component={Link}
-            to="/"
-            variant="contained"
-            color="primary"
-            aria-label="Home"
-          >
-            Home
-          </Button>
-
-          {/* Conditional Rendering Based on Authentication */}
-          {currentUser ? (
-            <>
-              {/* Create Post Button - Visible Only to Authenticated Users */}
-              <Button
-                component={Link}
-                to="/create"
-                variant="contained"
-                color="secondary"
-                aria-label="Create Post"
-              >
-                Create Post
-              </Button>
-
-              {/* Logout Button */}
-              <Logout />
-            </>
-          ) : (
-            /* Login Button - Visible Only to Unauthenticated Users */
-            <Button
-              component={Link}
-              to="/login"
-              variant="contained"
-              color="secondary"
-              aria-label="Login"
+          <Container maxWidth="lg">
+            {/* Navigation Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 2, // Space between buttons
+                mb: 4,
+              }}
             >
-              Login
-            </Button>
-          )}
-        </Box>
+              {currentUser && (
+                <>
+                  {/* Create Post Button - Visible Only to Authenticated Users */}
+                  <Button
+                    component={Link}
+                    to="/create"
+                    variant="contained"
+                    color="secondary"
+                    aria-label="Create Post"
+                  >
+                    Create Post
+                  </Button>
 
-        {/* Define Application Routes */}
-        <Routes>
-          {/* Home Route - Displays Latest Blog */}
-          <Route path="/" element={<Home />} />
+                  {/* Logout Button */}
+                  <Logout />
+                </>
+              )}
+            </Box>
 
-          {/* Login Route */}
-          <Route path="/login" element={<Login />} />
+            {/* Define Application Routes */}
+            <Routes>
+              {/* Home Route - Displays Latest Blog */}
+              <Route path="/" element={<Home />} />
 
-          {/* Blog List Route */}
-          <Route path="/blogs" element={<BlogList />} />
+              {/* Login Route - Accessed via Footer Admin Login */}
+              <Route path="/login" element={<Login />} />
 
-          {/* Individual Blog Page Route */}
-          <Route path="/blogs/:id" element={<BlogPage />} />
+              {/* Blog List Route */}
+              <Route path="/blogs" element={<BlogList />} />
 
-          {/* Protected Create Post Route - Accessible Only to Authenticated Users */}
-          <Route
-            path="/create"
-            element={
-              <ProtectedRoute>
-                <BlogForm />
-              </ProtectedRoute>
-            }
-          />
+              {/* Individual Blog Page Route */}
+              <Route path="/blogs/:id" element={<BlogPage />} />
 
-          {/* Redirect Unknown Routes to Home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Container>
-    </Router>
+              {/* Protected Create Post Route - Accessible Only to Authenticated Users */}
+              <Route
+                path="/create"
+                element={
+                  <ProtectedRoute>
+                    <BlogForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Redirect Unknown Routes to Home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Container>
+
+          {/* Footer with Admin Login */}
+          <footer className="App-footer">
+            <Link to="/login" className="Admin-login">
+              Admin Login
+            </Link>
+          </footer>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 };
 
