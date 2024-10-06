@@ -1,111 +1,116 @@
 // src/components/BlogList.js
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Typography, Box, Divider, Avatar } from '@mui/material';
+import { Link } from 'react-router-dom';
+import {
+  Typography,
+  Box,
+  CircularProgress,
+  Alert,
+  Card,
+  CardContent,
+  CardMedia,
+  Button,
+} from '@mui/material';
 
 const BlogList = () => {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true); // To handle loading state
-  const [error, setError] = useState(null);     // To handle errors
-
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
   useEffect(() => {
-    // Create a query against the 'posts' collection, ordered by 'createdAt' descending
-    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-
-    // Subscribe to real-time updates with error handling
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const postsData = snapshot.docs.map((doc) => ({
+    const fetchBlogs = async () => {
+      try {
+        const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const blogsData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setPosts(postsData);
-        setLoading(false); // Data fetched successfully
-      },
-      (error) => {
-        console.error('Error fetching posts:', error);
-        setError('Failed to fetch posts. Please try again later.');
-        setLoading(false); // Stop loading on error
+        setBlogs(blogsData);
+      } catch (err) {
+        console.error('Error fetching blogs:', err);
+        setError('Failed to fetch blog posts.');
+      } finally {
+        setLoading(false);
       }
-    );
+    };
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    fetchBlogs();
   }, []);
 
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <Typography variant="h6">Loading posts...</Typography>
+        <CircularProgress aria-label="Loading" />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error" align="center">
-          {error}
-        </Typography>
-      </Box>
+      <Alert severity="error" sx={{ mt: 4 }}>
+        {error}
+      </Alert>
+    );
+  }
+
+  if (blogs.length === 0) {
+    return (
+      <Alert severity="info" sx={{ mt: 4 }}>
+        No blog posts available.
+      </Alert>
     );
   }
 
   return (
-    <Box sx={{ mt: 4 }}>
-      {posts.length === 0 ? (
-        <Typography variant="h6" align="center">
-          No posts available.
-        </Typography>
-      ) : (
-        posts.map(({ id, title, content, author, imageUrl, createdAt }) => (
-          <Box key={id} sx={{ mb: 6, p: 2, boxShadow: 3, borderRadius: 2 }}>
-            {/* Author Information */}
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              {/* You can replace the Avatar with the author's profile picture if available */}
-              <Avatar sx={{ mr: 2 }}>{author.charAt(0).toUpperCase()}</Avatar>
-              <Typography variant="subtitle1" component="span">
-                {author}
-              </Typography>
-            </Box>
-
-            {/* Title */}
-            <Typography variant="h5" component="h2">
-              {title}
-            </Typography>
-
-            {/* Content */}
-            <Typography variant="body1" sx={{ mt: 1 }}>
-              {content}
-            </Typography>
-
-            {/* Image */}
-            {imageUrl && (
-              <Box sx={{ mt: 2 }}>
-                <img
-                  src={imageUrl}
-                  alt={title}
-                  style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '8px' }}
-                />
+    <Box sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" component="h2" gutterBottom>
+        All Blogs
+      </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {blogs.map(blog => (
+          <Card key={blog.id} sx={{ display: 'flex', cursor: 'pointer' }}>
+            {blog.imageUrl && (
+              <CardMedia
+                component="img"
+                sx={{ width: 160 }}
+                image={blog.imageUrl}
+                alt={blog.title}
+              />
+            )}
+            <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <CardContent>
+                <Typography component="div" variant="h5">
+                  <Link to={`/blogs/${blog.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {blog.title}
+                  </Link>
+                </Typography>
+                <Typography variant="subtitle1" color="text.secondary" component="div">
+                  By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {blog.content.substring(0, 100)}...
+                </Typography>
+              </CardContent>
+              <Box sx={{ flexGrow: 1 }} />
+              <Box sx={{ p: 2 }}>
+                <Button
+                  component={Link}
+                  to={`/blogs/${blog.id}`}
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  aria-label={`Read more about ${blog.title}`}
+                >
+                  Read More
+                </Button>
               </Box>
-            )}
-
-            {/* Timestamp */}
-            {createdAt && typeof createdAt.toDate === 'function' ? (
-              <Typography variant="caption" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
-                {createdAt.toDate().toLocaleString()}
-              </Typography>
-            ) : (
-              <Typography variant="caption" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
-                Date not available
-              </Typography>
-            )}
-            <Divider sx={{ mt: 3 }} />
-          </Box>
-        ))
-      )}
+            </Box>
+          </Card>
+        ))}
+      </Box>
     </Box>
   );
 };

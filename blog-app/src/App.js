@@ -1,8 +1,10 @@
 // src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import Home from './components/Home'; // Ensure you have Home.js
 import BlogList from './components/BlogList';
 import BlogForm from './components/BlogForm';
+import BlogPage from './components/BlogPage'; // Newly created component
 import Login from './components/Login';
 import Logout from './components/Logout'; // Import the Logout component
 import ProtectedRoute from './components/ProtectedRoute'; // Ensure this component exists
@@ -10,7 +12,7 @@ import { Container, Typography, Button, Box } from '@mui/material';
 import { useAuth } from './contexts/AuthContext'; // Ensure AuthContext is set up
 
 const App = () => {
-  const { currentUser } = useAuth();
+  const { currentUser } = useAuth(); // Access the current user's authentication state
 
   return (
     <Router>
@@ -27,7 +29,7 @@ const App = () => {
             justifyContent: 'center',
             mt: 2,
             mb: 4,
-            gap: 2,
+            gap: 2, // Space between buttons
           }}
         >
           {/* Home Button */}
@@ -44,7 +46,7 @@ const App = () => {
           {/* Conditional Rendering Based on Authentication */}
           {currentUser ? (
             <>
-              {/* Create Post Button - Visible Only to Authenticated Admin */}
+              {/* Create Post Button - Visible Only to Authenticated Users */}
               <Button
                 component={Link}
                 to="/create"
@@ -74,13 +76,19 @@ const App = () => {
 
         {/* Define Application Routes */}
         <Routes>
-          {/* Home Route - Displays Blog List */}
-          <Route path="/" element={<BlogList />} />
+          {/* Home Route - Displays Latest Blog */}
+          <Route path="/" element={<Home />} />
 
           {/* Login Route */}
           <Route path="/login" element={<Login />} />
 
-          {/* Protected Create Post Route - Accessible Only to Admin */}
+          {/* Blog List Route */}
+          <Route path="/blogs" element={<BlogList />} />
+
+          {/* Individual Blog Page Route */}
+          <Route path="/blogs/:id" element={<BlogPage />} />
+
+          {/* Protected Create Post Route - Accessible Only to Authenticated Users */}
           <Route
             path="/create"
             element={
