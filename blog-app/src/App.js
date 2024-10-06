@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-ro
 import BlogList from './components/BlogList';
 import BlogForm from './components/BlogForm';
 import Login from './components/Login';
+import Logout from './components/Logout'; // Import the Logout component
 import ProtectedRoute from './components/ProtectedRoute'; // Ensure this component exists
 import { Container, Typography, Button, Box } from '@mui/material';
 import { useAuth } from './contexts/AuthContext'; // Ensure AuthContext is set up
@@ -55,7 +56,7 @@ const App = () => {
               </Button>
 
               {/* Logout Button */}
-
+              <Logout />
             </>
           ) : (
             /* Login Button - Visible Only to Unauthenticated Users */
@@ -83,9 +84,9 @@ const App = () => {
           <Route
             path="/create"
             element={
-              
+              <ProtectedRoute>
                 <BlogForm />
-              
+              </ProtectedRoute>
             }
           />
 
