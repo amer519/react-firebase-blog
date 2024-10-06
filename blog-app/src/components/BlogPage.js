@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, Link } from 'react-router-dom';
-import { Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
+import { Typography, Box, CircularProgress, Alert, Button, Card, CardMedia, CardContent } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
 
 const BlogPage = () => {
   const { id } = useParams(); // Get blog ID from URL
@@ -54,23 +55,41 @@ const BlogPage = () => {
 
   return (
     <Box sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h2" gutterBottom>
-        {blog.title}
-      </Typography>
-      <Typography variant="subtitle1" gutterBottom>
-        By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
-      </Typography>
-      {blog.imageUrl && (
-        <Box sx={{ my: 2 }}>
-          <img src={blog.imageUrl} alt={blog.title} style={{ maxWidth: '100%', height: 'auto' }} />
-        </Box>
-      )}
-      <Typography variant="body1" paragraph>
-        {blog.content}
-      </Typography>
-      <Button component={Link} to="/blogs" variant="outlined" color="primary">
-        View All Blogs
-      </Button>
+      <Card sx={{ boxShadow: 3 }}>
+        {blog.imageUrl && (
+          <CardMedia
+            component="img"
+            height="400"
+            image={blog.imageUrl}
+            alt={blog.title}
+            sx={{ objectFit: 'cover' }}
+          />
+        )}
+        <CardContent>
+          <Typography variant="h4" component="h2" gutterBottom>
+            {blog.title}
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+            By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
+          </Typography>
+
+          {/* Use ReactMarkdown to render blog content */}
+          <ReactMarkdown>
+            {blog.content}
+          </ReactMarkdown>
+
+          <Button
+            component={Link}
+            to="/blogs"
+            variant="contained"
+            color="primary"
+            aria-label="Back to Blog List"
+            sx={{ mt: 2 }}
+          >
+            Back to Blog List
+          </Button>
+        </CardContent>
+      </Card>
     </Box>
   );
 };

@@ -2,8 +2,17 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { 
+    Typography, 
+    Box, 
+    CircularProgress, 
+    Alert, 
+    Button, 
+    Card, 
+    CardMedia, 
+    CardContent 
+  } from '@mui/material';
 
 const Home = () => {
   const [blog, setBlog] = useState(null);
@@ -55,23 +64,37 @@ const Home = () => {
 
   return (
     <Box sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h2" gutterBottom>
-        {blog.title}
-      </Typography>
-      <Typography variant="subtitle1" gutterBottom>
-        By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
-      </Typography>
-      {blog.imageUrl && (
-        <Box sx={{ my: 2 }}>
-          <img src={blog.imageUrl} alt={blog.title} style={{ maxWidth: '100%', height: 'auto' }} />
-        </Box>
-      )}
-      <Typography variant="body1" paragraph>
-        {blog.content}
-      </Typography>
-      <Button component={Link} to="/blogs" variant="outlined" color="primary">
-        View All Blogs
-      </Button>
+      <Card sx={{ boxShadow: 3 }}>
+        {blog.imageUrl && (
+          <CardMedia
+            component="img"
+            height="400"
+            image={blog.imageUrl}
+            alt={blog.title}
+            sx={{ objectFit: 'cover' }}
+          />
+        )}
+        <CardContent>
+          <Typography variant="h4" component="h2" gutterBottom>
+            {blog.title}
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+            By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
+          </Typography>
+          <Typography variant="body1" paragraph>
+            {blog.content.length > 200 ? `${blog.content.substring(0, 200)}...` : blog.content}
+          </Typography>
+          <Button
+            component={Link}
+            to={`/blogs/${blog.id}`}
+            variant="contained"
+            color="primary"
+            aria-label="Read More"
+          >
+            Read More
+          </Button>
+        </CardContent>
+      </Card>
     </Box>
   );
 };

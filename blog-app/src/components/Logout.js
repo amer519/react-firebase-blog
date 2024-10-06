@@ -2,7 +2,14 @@
 import React, { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const Logout = () => {

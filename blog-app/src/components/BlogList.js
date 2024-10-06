@@ -12,13 +12,14 @@ import {
   CardContent,
   CardMedia,
   Button,
+  Grid,
 } from '@mui/material';
 
 const BlogList = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
@@ -69,48 +70,48 @@ const BlogList = () => {
       <Typography variant="h4" component="h2" gutterBottom>
         All Blogs
       </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Grid container spacing={4}>
         {blogs.map(blog => (
-          <Card key={blog.id} sx={{ display: 'flex', cursor: 'pointer' }}>
-            {blog.imageUrl && (
-              <CardMedia
-                component="img"
-                sx={{ width: 160 }}
-                image={blog.imageUrl}
-                alt={blog.title}
-              />
-            )}
-            <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <CardContent>
-                <Typography component="div" variant="h5">
+          <Grid item xs={12} sm={6} md={4} key={blog.id}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {blog.imageUrl && (
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={blog.imageUrl}
+                  alt={blog.title}
+                  sx={{ objectFit: 'cover' }}
+                />
+              )}
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Typography variant="h5" component="h3" gutterBottom>
                   <Link to={`/blogs/${blog.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     {blog.title}
                   </Link>
                 </Typography>
-                <Typography variant="subtitle1" color="text.secondary" component="div">
-                  By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  By {blog.author} | {blog.createdAt?.toDate().toLocaleDateString()}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {blog.content.substring(0, 100)}...
+                <Typography variant="body2" color="text.secondary">
+                  {blog.content.length > 100 ? `${blog.content.substring(0, 100)}...` : blog.content}
                 </Typography>
               </CardContent>
-              <Box sx={{ flexGrow: 1 }} />
               <Box sx={{ p: 2 }}>
                 <Button
                   component={Link}
                   to={`/blogs/${blog.id}`}
-                  variant="outlined"
+                  variant="contained"
                   color="primary"
-                  size="small"
+                  fullWidth
                   aria-label={`Read more about ${blog.title}`}
                 >
                   Read More
                 </Button>
               </Box>
-            </Box>
-          </Card>
+            </Card>
+          </Grid>
         ))}
-      </Box>
+      </Grid>
     </Box>
   );
 };

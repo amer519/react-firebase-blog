@@ -1,35 +1,36 @@
 // src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import Home from './components/Home'; // Ensure you have Home.js
+import Home from './components/Home';
 import BlogList from './components/BlogList';
 import BlogForm from './components/BlogForm';
-import BlogPage from './components/BlogPage'; // Newly created component
+import BlogPage from './components/BlogPage';
 import Login from './components/Login';
-import Logout from './components/Logout'; // Import the Logout component
-import ProtectedRoute from './components/ProtectedRoute'; // Ensure this component exists
+import Logout from './components/Logout';
+import ProtectedRoute from './components/ProtectedRoute';
 import { Container, Typography, Button, Box } from '@mui/material';
-import { useAuth } from './contexts/AuthContext'; // Ensure AuthContext is set up
+import { useAuth } from './contexts/AuthContext';
 
 const App = () => {
   const { currentUser } = useAuth(); // Access the current user's authentication state
 
   return (
     <Router>
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
         {/* App Header */}
-        <Typography variant="h3" component="h1" align="center" sx={{ mt: 4 }}>
-          My Blog
-        </Typography>
+        <Box sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
+          <Typography variant="h3" component="h1" gutterBottom>
+            My Professional Blog
+          </Typography>
+        </Box>
 
         {/* Navigation Buttons */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'center',
-            mt: 2,
-            mb: 4,
             gap: 2, // Space between buttons
+            mb: 4,
           }}
         >
           {/* Home Button */}

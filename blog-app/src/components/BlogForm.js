@@ -12,8 +12,12 @@ import {
   InputLabel,
   FormControl,
   FormHelperText,
+  Card,
+  CardMedia,
+  CardContent,
 } from '@mui/material';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import imageCompression from 'browser-image-compression';
 
 const BlogForm = () => {
   const [title, setTitle] = useState('');
@@ -27,7 +31,7 @@ const BlogForm = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
@@ -45,9 +49,20 @@ const BlogForm = () => {
         return;
       }
 
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file)); // Set image preview
-      setError(''); // Clear any previous errors
+      try {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
+        setImage(compressedFile);
+        setImagePreview(URL.createObjectURL(compressedFile)); // Set image preview
+        setError(''); // Clear any previous errors
+      } catch (err) {
+        console.error('Image compression error:', err);
+        setError('Failed to compress image. Please try another image.');
+      }
     }
   };
 
@@ -110,115 +125,121 @@ const BlogForm = () => {
     <Box
       component="form"
       onSubmit={handleSubmit}
-      sx={{ mt: 4, maxWidth: '600px', mx: 'auto' }}
+      sx={{ mt: 4, maxWidth: '800px', mx: 'auto' }}
       aria-label="Create Post Form"
     >
-      <Typography variant="h4" component="h2" gutterBottom>
-        Create a New Post
-      </Typography>
+      <Card sx={{ boxShadow: 3, p: 3 }}>
+        <Typography variant="h4" component="h2" gutterBottom>
+          Create a New Post
+        </Typography>
 
-      {/* Success Alert */}
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
-
-      {/* Error Alert */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <TextField
-        label="Title"
-        variant="outlined"
-        fullWidth
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-        sx={{ mb: 2 }}
-        inputProps={{ 'aria-label': 'Post Title' }}
-      />
-
-      <TextField
-        label="Content"
-        variant="outlined"
-        fullWidth
-        multiline
-        rows={4}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        required
-        sx={{ mb: 2 }}
-        inputProps={{ 'aria-label': 'Post Content' }}
-      />
-
-      <TextField
-        label="Author's Name"
-        variant="outlined"
-        fullWidth
-        value={author}
-        onChange={(e) => setAuthor(e.target.value)}
-        required
-        sx={{ mb: 2 }}
-        inputProps={{ 'aria-label': "Author's Name" }}
-      />
-
-      {/* Image Upload Field with Preview */}
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel htmlFor="image-upload">Upload Image</InputLabel>
-        <Button
-          variant="contained"
-          component="label"
-          color="secondary"
-          sx={{ mt: 1 }}
-          aria-label="Upload Image"
-        >
-          Choose Image
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleImageChange}
-          />
-        </Button>
-        {image && <FormHelperText>{image.name}</FormHelperText>}
-      </FormControl>
-
-      {/* Image Preview */}
-      {imagePreview && (
-        <Box sx={{ mb: 2 }}>
-          <img src={imagePreview} alt="Selected" style={{ maxWidth: '100%', height: 'auto' }} />
-        </Box>
-      )}
-
-      <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          disabled={loading}
-          aria-label="Add Post"
-        >
-          Add Post
-        </Button>
-        {loading && (
-          <CircularProgress
-            size={24}
-            sx={{
-              color: 'primary.main',
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              marginTop: '-12px',
-              marginLeft: '-12px',
-            }}
-            aria-label="Loading"
-          />
+        {/* Success Alert */}
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {success}
+          </Alert>
         )}
-      </Box>
+
+        {/* Error Alert */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <TextField
+          label="Title"
+          variant="outlined"
+          fullWidth
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          sx={{ mb: 3 }}
+          inputProps={{ 'aria-label': 'Post Title' }}
+        />
+
+        <TextField
+          label="Content"
+          variant="outlined"
+          fullWidth
+          multiline
+          rows={6}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+          sx={{ mb: 3 }}
+          inputProps={{ 'aria-label': 'Post Content' }}
+        />
+
+        <TextField
+          label="Author's Name"
+          variant="outlined"
+          fullWidth
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          required
+          sx={{ mb: 3 }}
+          inputProps={{ 'aria-label': "Author's Name" }}
+        />
+
+        {/* Image Upload Field with Preview */}
+        <FormControl fullWidth sx={{ mb: 3 }}>
+          <InputLabel htmlFor="image-upload">Upload Image</InputLabel>
+          <Button
+            variant="contained"
+            component="label"
+            color="secondary"
+            sx={{ mt: 1 }}
+            aria-label="Upload Image"
+          >
+            Choose Image
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleImageChange}
+            />
+          </Button>
+          {image && <FormHelperText>{image.name}</FormHelperText>}
+        </FormControl>
+
+        {/* Image Preview */}
+        {imagePreview && (
+          <Box sx={{ mb: 3 }}>
+            <img
+              src={imagePreview}
+              alt="Selected"
+              style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }}
+            />
+          </Box>
+        )}
+
+        <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            aria-label="Add Post"
+          >
+            Add Post
+          </Button>
+          {loading && (
+            <CircularProgress
+              size={24}
+              sx={{
+                color: 'primary.main',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                marginTop: '-12px',
+                marginLeft: '-12px',
+              }}
+              aria-label="Loading"
+            />
+          )}
+        </Box>
+      </Card>
     </Box>
   );
 };
