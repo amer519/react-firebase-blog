@@ -24,6 +24,7 @@ import { Filter } from 'bad-words';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'; // Import Material UI Thumbs up icon
 import IconButton from '@mui/material/IconButton'; // For the button functionality
 import { useAuth } from '../contexts/AuthContext';  // Import your custom hook
+import grayMatter from 'gray-matter';
 
 const BlogPage = () => {
   const { id } = useParams(); // Get blog ID from URL
@@ -46,8 +47,10 @@ const BlogPage = () => {
         const docRef = doc(db, 'posts', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            const blogData = docSnap.data();
-          setBlog({ id: docSnap.id, ...docSnap.data() });
+          const blogContent = docSnap.data().content; // Assuming your blog content is stored in 'content'
+          const { data: frontmatter, content } = grayMatter(blogContent); // Parse frontmatter and content
+          
+          setBlog({ id: docSnap.id, frontmatter, content }); // Set both frontmatter and content          
           setLikes(blogData.likes || 0);  // Set the likes count from Firestore (if it exists)
         } else {
           setError('No such blog post found.');
@@ -187,20 +190,22 @@ const BlogPage = () => {
               />
             )}
             <CardContent>
-              <Typography
-                variant="h3"
-                component="h1"
-                sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '2.0rem', fontFamily: 'Century Gothic' }}
+            <Typography
+              variant="h3"
+              component="h1"
+              sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '2.0rem', fontFamily: 'Century Gothic' }}
               >
-                {blog.title}
+                {blog.frontmatter.title}
               </Typography>
+
               {/* Horizontal line below the title, spanning across both blog and sidebar */}
               <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
                 <Divider sx={{ borderBottomWidth: 2 }} />
               </Box>
               <Typography variant="subtitle1" color="text.secondary" sx={{ textAlign: 'center', mb: 2 }}>
-                By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
+                By {blog.frontmatter.author} | {new Date(blog.frontmatter.date).toLocaleDateString()}
               </Typography>
+
 
               <ReactMarkdown>{blog.content}</ReactMarkdown>
 
