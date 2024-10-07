@@ -1,10 +1,26 @@
 // src/components/BlogPage.js
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, limit, getDocs, addDoc, Timestamp, } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Container, Box, Grid, Paper, Typography, Button, Card, CardMedia, CardContent, CircularProgress, Alert } from '@mui/material';
+import {
+  Container,
+  Box,
+  Grid,
+  Paper,
+  Typography,
+  Button,
+  Card,
+  CardMedia,
+  CardContent,
+  CircularProgress,
+  Alert,
+  Divider,
+  TextField,
+  Avatar,
+} from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+import { Filter } from 'bad-words';
 
 const BlogPage = () => {
   const { id } = useParams(); // Get blog ID from URL
@@ -12,6 +28,10 @@ const BlogPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [relatedBlogs, setRelatedBlogs] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [name, setName] = useState('');
+  const filter = new Filter(); // Initialize bad-words filter
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -32,24 +52,82 @@ const BlogPage = () => {
     };
 
     const fetchRelatedBlogs = async () => {
-        try {
-          const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5)); // Fetch 5 blogs initially
-          const querySnapshot = await getDocs(q);
-          const blogs = querySnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(blog => blog.id !== id) // Exclude the current blog post from related posts
-            .slice(0, 3); // Limit to 3 related blogs after filtering
-          setRelatedBlogs(blogs);
-        } catch (err) {
-          console.error('Error fetching related blogs:', err);
-        }
-      };
-      
-      
+      try {
+        const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5)); // Fetch 5 blogs initially
+        const querySnapshot = await getDocs(q);
+        const blogs = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((blog) => blog.id !== id) // Exclude the current blog post from related posts
+          .slice(0, 3); // Limit to 3 related blogs after filtering
+        setRelatedBlogs(blogs);
+      } catch (err) {
+        console.error('Error fetching related blogs:', err);
+      }
+    };
+
+    const fetchComments = async () => {
+      try {
+        const commentsRef = collection(db, 'posts', id, 'comments');
+        const commentsQuery = query(commentsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(commentsQuery);
+        const fetchedComments = querySnapshot.docs.map((doc) => doc.data());
+        setComments(fetchedComments);
+      } catch (err) {
+        console.error('Error fetching comments:', err);
+      }
+    };
 
     fetchBlog();
     fetchRelatedBlogs();
+    fetchComments();
+    fetchBlog();
   }, [id]);
+
+  const handleCommentSubmit = async () => {
+    const commentData = {
+      name: name || 'Anonymous',
+      comment: filter.clean(newComment), // Use filter to clean the comment
+      createdAt: new Date(),
+    };
+
+    try {
+      const commentsRef = collection(db, 'posts', id, 'comments');
+
+      // Get the last comment by this user
+    const lastCommentQuery = query(commentsRef, orderBy('createdAt', 'desc'), limit(1));
+    const lastCommentSnapshot = await getDocs(lastCommentQuery);
+
+    let canComment = true;
+
+    if (!lastCommentSnapshot.empty) {
+      const lastComment = lastCommentSnapshot.docs[0].data();
+      const lastCommentTime = lastComment.createdAt.toDate();
+      const currentTime = new Date();
+      const timeDifference = (currentTime - lastCommentTime) / (1000 * 60); // Time difference in minutes
+
+      // Check if the last comment was made within the last 5 minutes
+      if (timeDifference < 5) {
+        canComment = false;
+        alert('You can only comment once every 5 minutes.');
+      }
+    }
+
+    if (canComment) {
+      const commentData = {
+        name: name || 'Anonymous',
+        comment: filter.clean(newComment),
+        createdAt: Timestamp.now(),  // Store the current timestamp
+      };
+      
+      await addDoc(commentsRef, commentData);
+      setComments([commentData, ...comments]); // Update the comments list
+      setNewComment(''); // Clear the comment input
+      setName(''); // Clear the name input
+    }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -74,8 +152,9 @@ const BlogPage = () => {
   return (
     <Container sx={{ mt: 4, mb: 4 }}>
       <Grid container spacing={4}>
-        {/* Main Blog Content */}
+        {/* Main Content Area */}
         <Grid item xs={12} md={8}>
+          {/* Blog Content */}
           <Card sx={{ boxShadow: 3 }}>
             {blog.imageUrl && (
               <CardMedia
@@ -87,9 +166,17 @@ const BlogPage = () => {
               />
             )}
             <CardContent>
-              <Typography variant="h3" component="h1" sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '2.0rem', fontFamily:'Century Gothic' }}>
+              <Typography
+                variant="h3"
+                component="h1"
+                sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '2.0rem', fontFamily: 'Century Gothic' }}
+              >
                 {blog.title}
               </Typography>
+              {/* Horizontal line below the title, spanning across both blog and sidebar */}
+              <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+                <Divider sx={{ borderBottomWidth: 2 }} />
+              </Box>
               <Typography variant="subtitle1" color="text.secondary" sx={{ textAlign: 'center', mb: 2 }}>
                 By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
               </Typography>
@@ -108,6 +195,54 @@ const BlogPage = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Comment Section */}
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Leave a Comment
+            </Typography>
+            <TextField
+              fullWidth
+              label="Your Name (optional)"
+              variant="outlined"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Your Comment"
+              variant="outlined"
+              multiline
+              rows={4}
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Button variant="contained" color="primary" onClick={handleCommentSubmit}>
+              Submit Comment
+            </Button>
+
+            {/* Display Comments */}
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Comments
+              </Typography>
+              {comments.length > 0 ? (
+                comments.map((comment, index) => (
+                  <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Avatar sx={{ bgcolor: '#1976d2', mr: 2 }}>{comment.name[0]}</Avatar>
+                    <Box>
+                      <Typography variant="subtitle2">{comment.name}</Typography>
+                      <Typography variant="body2">{comment.comment}</Typography>
+                    </Box>
+                  </Box>
+                ))
+              ) : (
+                <Typography>No comments yet. Be the first to comment!</Typography>
+              )}
+            </Box>
+          </Box>
         </Grid>
 
         {/* Sidebar for Related Posts / Ads */}
@@ -116,12 +251,15 @@ const BlogPage = () => {
             <Typography variant="h6" gutterBottom>
               Related Posts
             </Typography>
+            <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+              <Divider sx={{ borderBottomWidth: 2 }} />
+            </Box>
             {relatedBlogs.length > 0 ? (
               <ul style={{ padding: 0, listStyle: 'none' }}>
                 {relatedBlogs.map((relatedBlog) => (
                   <li key={relatedBlog.id} style={{ marginBottom: '16px' }}>
                     <Link to={`/blogs/${relatedBlog.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center'}}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         {relatedBlog.imageUrl && (
                           <Box
                             component="img"

@@ -11,7 +11,8 @@ import {
     Button, 
     Card, 
     CardMedia, 
-    CardContent 
+    CardContent,
+    Divider 
 } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 
@@ -76,9 +77,12 @@ const Home = () => {
           />
         )}
         <CardContent>
-          <Typography variant="h4" component="h2" gutterBottom>
+          <Typography variant="h4" component="h2" fontFamily='Century Gothic' gutterBottom>
             {blog.title}
           </Typography>
+          <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+        <Divider sx={{ borderBottomWidth: 2 }} />
+            </Box>
           <Typography variant="subtitle1" color="text.secondary" gutterBottom>
             By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
           </Typography>

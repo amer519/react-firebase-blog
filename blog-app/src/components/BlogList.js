@@ -13,6 +13,7 @@ import {
   CardMedia,
   Button,
   Grid,
+  Divider
 } from '@mui/material';
 
 const BlogList = () => {
@@ -67,9 +68,12 @@ const BlogList = () => {
 
   return (
     <Box sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h2" gutterBottom>
+      <Typography variant="h4" component="h2" fontFamily="Century Gothic" gutterBottom>
         All Blogs
       </Typography>
+      <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+        <Divider sx={{ borderBottomWidth: 2 }} />
+      </Box>
       <Grid container spacing={4}>
         {blogs.map(blog => (
           <Grid item xs={12} sm={6} md={4} key={blog.id}>
@@ -84,11 +88,14 @@ const BlogList = () => {
                 />
               )}
               <CardContent sx={{ flexGrow: 1 }}>
-                <Typography variant="h5" component="h3" gutterBottom>
+                <Typography variant="h5" component="h3" fontFamily="Century Gothic" gutterBottom>
                   <Link to={`/blogs/${blog.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     {blog.title}
                   </Link>
                 </Typography>
+                <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+                  <Divider sx={{ borderBottomWidth: 2 }} />
+                </Box>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   By {blog.author} | {blog.createdAt?.toDate().toLocaleDateString()}
                 </Typography>
