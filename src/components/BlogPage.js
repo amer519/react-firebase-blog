@@ -51,7 +51,7 @@ const BlogPage = () => {
           const { data: frontmatter, content } = grayMatter(blogContent); // Parse frontmatter and content
           
           setBlog({ id: docSnap.id, frontmatter, content }); // Set both frontmatter and content          
-          setLikes(blogData.likes || 0);  // Set the likes count from Firestore (if it exists)
+          setLikes(frontmatter.likes || 0);  // Set the likes count from Firestore (if it exists)
         } else {
           setError('No such blog post found.');
         }
