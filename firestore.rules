@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  
+  match /databases/{database}/documents {
+    
+    // Rules for posts collection
+    match /posts/{postId} {
+      
+      // Allow anyone to read the blog posts
+      allow read: if true;
+
+      // Only allow authenticated admin users to write to posts (e.g., create or update posts)
+      allow write: if request.auth != null && request.auth.uid == 'vqwpiGlbosQWkuSkfI5aFXdaAiZ2';
+
+      // Allow anyone to read and write comments
+      match /comments/{commentId} {
+        allow read: if true;  // Allow everyone to read comments
+        allow write: if true; // Allow everyone to write comments
+      }
+    }
+  }
+}

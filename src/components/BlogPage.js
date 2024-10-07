@@ -1,7 +1,7 @@
 // src/components/BlogPage.js
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs, addDoc, Timestamp, } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, limit, getDocs, addDoc, Timestamp, updateDoc, increment, } from 'firebase/firestore';
 import { db } from '../firebase';
 import {
   Container,
@@ -21,6 +21,9 @@ import {
 } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import { Filter } from 'bad-words';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp'; // Import Material UI Thumbs up icon
+import IconButton from '@mui/material/IconButton'; // For the button functionality
+import { useAuth } from '../contexts/AuthContext';  // Import your custom hook
 
 const BlogPage = () => {
   const { id } = useParams(); // Get blog ID from URL
@@ -32,6 +35,10 @@ const BlogPage = () => {
   const [newComment, setNewComment] = useState('');
   const [name, setName] = useState('');
   const filter = new Filter(); // Initialize bad-words filter
+  const [likes, setLikes] = useState(0);  // State for storing the number of likes
+  const [liked, setLiked] = useState(false); // State to track if the user liked the post
+  const { currentUser } = useAuth();  // Access the currentUser from the AuthContext
+
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -39,7 +46,9 @@ const BlogPage = () => {
         const docRef = doc(db, 'posts', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
+            const blogData = docSnap.data();
           setBlog({ id: docSnap.id, ...docSnap.data() });
+          setLikes(blogData.likes || 0);  // Set the likes count from Firestore (if it exists)
         } else {
           setError('No such blog post found.');
         }
@@ -80,7 +89,6 @@ const BlogPage = () => {
     fetchBlog();
     fetchRelatedBlogs();
     fetchComments();
-    fetchBlog();
   }, [id]);
 
   const handleCommentSubmit = async () => {
@@ -128,6 +136,19 @@ const BlogPage = () => {
       console.error('Error adding comment:', err);
     }
   };
+
+  const handleLike = async () => {
+    if (!liked) {
+      const postRef = doc(db, 'posts', id);  // Get the post reference from Firestore
+  
+      await updateDoc(postRef, {
+        likes: increment(1),  // Increment the number of likes by 1 in Firestore
+      });
+  
+      setLikes(likes + 1);  // Update the likes count in the component's state
+      setLiked(true);  // Set the liked state to true so the user can't like it again
+    }
+  };  
 
   if (loading) {
     return (
@@ -193,6 +214,22 @@ const BlogPage = () => {
               >
                 Back to Blog List
               </Button>
+              {/* Like Button */}
+  <IconButton
+    onClick={handleLike}  // Calls the handleLike function when clicked
+    sx={{
+      color: liked ? '#1976d2' : '#999',  // Changes color if liked
+      '&:hover': { color: '#1976d2' },  // Changes color on hover
+    }}
+  >
+    {/* <ThumbUpIcon />  Thumbs up icon */}
+    {/* <span role="img" aria-label="like">👍</span> */}
+  </IconButton>
+
+  {/* Likes Counter */}
+  <Typography variant="body1" sx={{ ml: 1 }}>
+    {/* {likes} */}
+  </Typography>
             </CardContent>
           </Card>
 

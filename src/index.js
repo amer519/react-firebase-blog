@@ -1,24 +1,26 @@
 // src/index.js
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client'; // Correct import for React 18
 import App from './App';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
-import { IconButton } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
+import { AuthProvider } from './contexts/AuthContext';
 
-<IconButton aria-label="edit">
-  <EditIcon />
-</IconButton>
+// Locate the root DOM node
+const container = document.getElementById('root');
 
+// Create a root
+const root = createRoot(container);
 
-ReactDOM.render(
+// Render the application
+root.render(
   <React.StrictMode>
+    <AuthProvider>
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <App />
     </ThemeProvider>
-  </React.StrictMode>,
-  document.getElementById('root')
+    </AuthProvider>
+  </React.StrictMode>
 );
