@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import { Filter } from 'bad-words';
-import ThumbUpIcon from '@mui/icons-material/ThumbUp'; // Import Material UI Thumbs up icon
 import IconButton from '@mui/material/IconButton'; // For the button functionality
 import { useAuth } from '../contexts/AuthContext';  // Import your custom hook
 
@@ -199,8 +198,8 @@ const BlogPage = () => {
               <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
                 <Divider sx={{ borderBottomWidth: 2 }} />
               </Box>
-              <Typography variant="subtitle1" color="text.secondary" sx={{ textAlign: 'center', mb: 2 }}>
-                By {blog.author}
+              <Typography variant="subtitle1" color="text.secondary" sx={{ textAlign: 'left', mb: 2 }}>
+              By: {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
               </Typography>
 
 
