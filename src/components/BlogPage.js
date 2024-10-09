@@ -23,6 +23,8 @@ import ReactMarkdown from 'react-markdown';
 import { Filter } from 'bad-words';
 import IconButton from '@mui/material/IconButton'; // For the button functionality
 import { useAuth } from '../contexts/AuthContext';  // Import your custom hook
+import { analytics } from './firebase'; // Import the initialized analytics
+import { logEvent } from 'firebase/analytics'; // Import the logEvent function
 
 const BlogPage = () => {
   const { id } = useParams(); // Get blog ID from URL
@@ -146,7 +148,15 @@ const BlogPage = () => {
       setLikes(likes + 1);  // Update the likes count in the component's state
       setLiked(true);  // Set the liked state to true so the user can't like it again
     }
-  };  
+  }; 
+  
+  const handleButtonClick = () => {
+    logEvent(analytics, 'button_click', {
+      button_name: 'Back to Blog List', // Name or label of the button
+      button_type: 'navigation', // Optional: you can add additional details about the event
+    });
+  };
+  
 
   if (loading) {
     return (
@@ -212,6 +222,7 @@ const BlogPage = () => {
                 color="primary"
                 aria-label="Back to Blog List"
                 sx={{ mt: 2 }}
+                onClick={handleButtonClick}
               >
                 Back to Blog List
               </Button>
