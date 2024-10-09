@@ -70,10 +70,15 @@ const Home = () => {
         {blog.imageUrl && (
           <CardMedia
             component="img"
-            height="400"
             image={blog.imageUrl}
             alt={blog.title}
-            sx={{ objectFit: 'cover' }}
+            sx={{
+              width: '100%',
+        height: 'auto',
+        maxHeight: { xs: 300, md: 500 }, // Adjust based on screen size
+        objectFit: 'contain', // Ensures the whole image is shown without cropping
+        borderRadius: 1, // Optional: adds a slight border-radius to match your design
+            }}
           />
         )}
         <CardContent>
