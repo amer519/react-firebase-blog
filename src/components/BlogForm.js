@@ -1,5 +1,5 @@
 // src/components/BlogForm.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import {
@@ -24,21 +24,21 @@ const BlogForm = () => {
   const [content, setContent] = useState('');
   const [author, setAuthor] = useState('');
   const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null); // For image preview
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageAlt, setImageAlt] = useState(''); // State for image alt text
+  const [postSummary, setPostSummary] = useState(''); // State for post alt text
 
   // States for handling loading, success, and error messages
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-
   const handleImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
-      // Optional: Validate file type and size
+
       const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
 
       if (!validTypes.includes(file.type)) {
         setError('Only JPEG, PNG, GIF, WEBP, and AVIF images are allowed.');
@@ -58,8 +58,8 @@ const BlogForm = () => {
         };
         const compressedFile = await imageCompression(file, options);
         setImage(compressedFile);
-        setImagePreview(URL.createObjectURL(compressedFile)); // Set image preview
-        setError(''); // Clear any previous errors
+        setImagePreview(URL.createObjectURL(compressedFile));
+        setError('');
       } catch (err) {
         console.error('Image compression error:', err);
         setError('Failed to compress image. Please try another image.');
@@ -69,63 +69,58 @@ const BlogForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // Reset previous messages
+
     setSuccess('');
     setError('');
-  
-    // Client-side Validation
-    if (!title.trim() || !content.trim() || !author.trim()) {
-      setError('Title, Content, and Author are required.');
+
+    if (!title.trim() || !content.trim() || !author.trim() || !postSummary.trim()) {
+      setError('Title, Content, Author, and Post Summary are required.');
       return;
     }
-  
-    // Check if user is authenticated and authorized
+
     if (!currentUser) {
       setError('You must be signed in to add a post.');
       return;
     }
-  
-    // Replace 'YOUR_ADMIN_UID' with the actual UID of your admin user
+
     const adminUID = 'vqwpiGlbosQWkuSkfI5aFXdaAiZ2';
-  
+
     if (currentUser.uid !== adminUID) {
       setError('You do not have permission to add a post.');
       return;
     }
-  
-    console.log('Authenticated as admin user:', currentUser.uid);
-    
-    setLoading(true); // Start Loading
-  
+
+    setLoading(true);
+
     try {
       let imageUrl = '';
-  
-      // If an image is selected, upload it to Firebase Storage
+
       if (image) {
         const storageRef = ref(storage, `blog_images/${Date.now()}_${image.name}`);
         await uploadBytes(storageRef, image);
         imageUrl = await getDownloadURL(storageRef);
       }
-  
-      // Add the blog post to Firestore
+
       await addDoc(collection(db, 'posts'), {
         title: title.trim(),
         content: content.trim(),
         author: author.trim(),
-        imageUrl: imageUrl || '', // Store empty string if no image
-        likes: 0,               // Initialize likes to 0
+        imageUrl: imageUrl || '',
+        imageAlt: imageAlt.trim(),
+        postSummary: postSummary.trim(),
+        likes: 0,
         createdAt: serverTimestamp(),
       });
-  
+
       setSuccess('Post added successfully!');
       setTitle('');
       setContent('');
       setAuthor('');
       setImage(null);
       setImagePreview(null);
-  
-      // Reset the file input field
+      setImageAlt('');
+      setPostSummary('');
+
       e.target.reset();
     } catch (err) {
       console.error('Error adding document: ', err);
@@ -135,10 +130,9 @@ const BlogForm = () => {
         setError('Failed to add post. Please try again.');
       }
     } finally {
-      setLoading(false); // End Loading
+      setLoading(false);
     }
-  };  
-  
+  };
 
   return (
     <Box
@@ -152,14 +146,12 @@ const BlogForm = () => {
           Create a New Post
         </Typography>
 
-        {/* Success Alert */}
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
         )}
 
-        {/* Error Alert */}
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -201,7 +193,17 @@ const BlogForm = () => {
           inputProps={{ 'aria-label': "Author's Name" }}
         />
 
-        {/* Image Upload Field with Preview */}
+        <TextField
+          label="Post Summary (Alt Text for Post)"
+          variant="outlined"
+          fullWidth
+          value={postSummary}
+          onChange={(e) => setPostSummary(e.target.value)}
+          required
+          sx={{ mb: 3 }}
+          inputProps={{ 'aria-label': 'Post Summary' }}
+        />
+
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel htmlFor="image-upload">Upload Image</InputLabel>
           <Button
@@ -222,7 +224,16 @@ const BlogForm = () => {
           {image && <FormHelperText>{image.name}</FormHelperText>}
         </FormControl>
 
-        {/* Image Preview */}
+        <TextField
+          label="Image Alt Text"
+          variant="outlined"
+          fullWidth
+          value={imageAlt}
+          onChange={(e) => setImageAlt(e.target.value)}
+          sx={{ mb: 3 }}
+          inputProps={{ 'aria-label': 'Image Alt Text' }}
+        />
+
         {imagePreview && (
           <Box sx={{ mb: 3 }}>
             <img
