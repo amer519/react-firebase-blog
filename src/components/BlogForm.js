@@ -234,15 +234,16 @@ const BlogForm = () => {
           inputProps={{ 'aria-label': 'Image Alt Text' }}
         />
 
-        {imagePreview && (
-          <Box sx={{ mb: 3 }}>
-            <img
-              src={imagePreview}
-              alt="Selected"
-              style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }}
-            />
-          </Box>
-        )}
+    {imagePreview && (
+        <Box sx={{ mb: 3, display: 'inline-block' }}>
+          <img
+            src={imagePreview}
+            alt="Selected"
+            style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }}
+    />
+  </Box>
+)}
+
 
         <Box sx={{ position: 'relative', display: 'inline-flex' }}>
           <Button
