@@ -23,7 +23,7 @@ import ReactMarkdown from 'react-markdown';
 import { Filter } from 'bad-words';
 import IconButton from '@mui/material/IconButton'; // For the button functionality
 import { useAuth } from '../contexts/AuthContext';  // Import your custom hook
-import { analytics } from './firebase'; // Import the initialized analytics
+import { analytics } from '../firebase'; // Import the initialized analytics
 import { logEvent } from 'firebase/analytics'; // Import the logEvent function
 
 const BlogPage = () => {
