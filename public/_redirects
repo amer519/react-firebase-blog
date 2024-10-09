@@ -1,1 +1,8 @@
+# Serve the favicon and manifest files directly
+/manifest.json  /manifest.json  200
+/favicon.png    /favicon.png    200
+/logo192.png    /logo192.png    200
+/logo512.png    /logo512.png    200
+
+# Catch-all rule for SPA routing
 /*    /index.html   200
