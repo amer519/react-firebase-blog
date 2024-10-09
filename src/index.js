@@ -7,30 +7,12 @@ import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
 import { AuthProvider } from './contexts/AuthContext';
 
-// FIREBASE ANALYTICS
-// import { getAnalytics } from "firebase/analytics";
-// import { initializeApp } from "firebase/app";
-// import { logEvent } from "firebase/analytics";
+
 
 // Locate the root DOM node
 const container = document.getElementById('root');
 // Create a root
 const root = createRoot(container);
-
-// Initialize Firebase Analytics and track traffic
-// if (typeof window !== "undefined") {
-//   const analytics = getAnalytics(app);
-// }
-
-// THIS WAS PART OF FIREBASE ANALYTICS - I DON'T KNOW IF IT'S NEEDED
-// // Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-
-
-// LOG CUSTOM EVENT
-// const handleButtonClick = () => {
-//   logEvent(analytics, 'button_click', { button_name: 'subscribe' });
-// };
 
 
 // Render the application
