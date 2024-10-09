@@ -3,6 +3,9 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+// FIREBASE ANALYTICS
+// import { getAnalytics } from "firebase/analytics";
+// import { logEvent } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -24,4 +27,18 @@ const storage = getStorage(app);
 
 const auth = getAuth(app);
 
-export { db, storage, auth };
+// Initialize Firebase Analytics and export it
+let analytics;
+
+if (typeof window !== "undefined") {
+  // Ensure that analytics is only initialized in the browser environment (not in SSR)
+  analytics = getAnalytics(app);
+}
+
+
+// LOG CUSTOM EVENT
+// const handleButtonClick = () => {
+//   logEvent(analytics, 'button_click', { button_name: 'subscribe' });
+// };
+
+export { db, storage, auth, analytics };
