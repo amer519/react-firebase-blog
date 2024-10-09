@@ -188,10 +188,14 @@ const BlogPage = () => {
             {blog.imageUrl && (
               <CardMedia
                 component="img"
-                height="400"
                 image={blog.imageUrl}
                 alt={blog.title}
-                sx={{ objectFit: 'cover' }}
+                sx={{
+                  width: '100%', // Image will take the full width of its container
+                  height: 'auto', // Height adjusts automatically based on width
+                  maxHeight: { xs: 200, md: 400 }, // Adjusts max-height based on screen size
+                  objectFit: 'cover', // Ensures the image maintains its aspect ratio
+                }}
               />
             )}
             <CardContent>
