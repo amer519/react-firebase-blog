@@ -1,6 +1,6 @@
 // src/components/BlogForm.js
 import React, { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import {
   TextField,
@@ -18,15 +18,15 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import imageCompression from 'browser-image-compression';
 import { useAuth } from '../contexts/AuthContext';
 
-const BlogForm = () => {
+const BlogForm = ({ post }) => {
   const { currentUser } = useAuth();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [author, setAuthor] = useState('');
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageAlt, setImageAlt] = useState(''); // State for image alt text
-  const [postSummary, setPostSummary] = useState(''); // State for post alt text
+  const [title, setTitle] = useState(post ? post.title : '');
+  const [content, setContent] = useState(post ? post.content : '');
+  const [author, setAuthor] = useState(post ? post.author : '');
+  const [image, setImage] = useState(null); // Image must be selected again for edits
+  const [imagePreview, setImagePreview] = useState(post ? post.imageUrl : null);
+  const [imageAlt, setImageAlt] = useState(post ? post.imageAlt : ''); 
+  const [postSummary, setPostSummary] = useState(post ? post.postSummary : '');
 
   // States for handling loading, success, and error messages
   const [loading, setLoading] = useState(false);
@@ -69,50 +69,63 @@ const BlogForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     setSuccess('');
     setError('');
-
+  
     if (!title.trim() || !content.trim() || !author.trim() || !postSummary.trim()) {
       setError('Title, Content, Author, and Post Summary are required.');
       return;
     }
-
+  
     if (!currentUser) {
-      setError('You must be signed in to add a post.');
+      setError('You must be signed in to add or edit a post.');
       return;
     }
-
+  
     const adminUID = 'vqwpiGlbosQWkuSkfI5aFXdaAiZ2';
-
     if (currentUser.uid !== adminUID) {
-      setError('You do not have permission to add a post.');
+      setError('You do not have permission to add or edit posts.');
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
-      let imageUrl = '';
-
+      let imageUrl = post?.imageUrl || '';
+  
       if (image) {
         const storageRef = ref(storage, `blog_images/${Date.now()}_${image.name}`);
         await uploadBytes(storageRef, image);
         imageUrl = await getDownloadURL(storageRef);
       }
-
-      await addDoc(collection(db, 'posts'), {
+  
+      const postData = {
         title: title.trim(),
         content: content.trim(),
         author: author.trim(),
         imageUrl: imageUrl || '',
         imageAlt: imageAlt.trim(),
         postSummary: postSummary.trim(),
-        likes: 0,
-        createdAt: serverTimestamp(),
-      });
-
-      setSuccess('Post added successfully!');
+        updatedAt: serverTimestamp(),
+      };
+  
+      if (post) {
+        // Update existing post
+        const postRef = doc(db, 'posts', post.id);
+        await updateDoc(postRef, postData);
+        setSuccess('Post updated successfully!');
+      } else {
+        // Add new post
+        await addDoc(collection(db, 'posts'), {
+          ...postData,
+          likes: 0,
+          createdAt: serverTimestamp(),
+        });
+        setSuccess('Post added successfully!');
+      }
+  
+      // Clear form fields after submission
       setTitle('');
       setContent('');
       setAuthor('');
@@ -120,19 +133,19 @@ const BlogForm = () => {
       setImagePreview(null);
       setImageAlt('');
       setPostSummary('');
-
+  
       e.target.reset();
     } catch (err) {
-      console.error('Error adding document: ', err);
+      console.error('Error adding or updating document: ', err);
       if (err.code === 'storage/unauthorized') {
         setError('You do not have permission to upload images.');
       } else {
-        setError('Failed to add post. Please try again.');
+        setError('Failed to add or update post. Please try again.');
       }
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   return (
     <Box
@@ -141,23 +154,23 @@ const BlogForm = () => {
       sx={{ mt: 4, maxWidth: '800px', mx: 'auto' }}
       aria-label="Create Post Form"
     >
-      <Card sx={{ boxShadow: 3, p: 3 }}>
+      <Card sx={{ boxShadow: 3, p: 3 }}> {/* Opening the Card here */}
         <Typography variant="h4" component="h2" gutterBottom>
-          Create a New Post
+          {post ? 'Edit Post' : 'Create a New Post'}
         </Typography>
-
+  
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
         )}
-
+  
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-
+  
         <TextField
           label="Title"
           variant="outlined"
@@ -168,7 +181,7 @@ const BlogForm = () => {
           sx={{ mb: 3 }}
           inputProps={{ 'aria-label': 'Post Title' }}
         />
-
+  
         <TextField
           label="Content"
           variant="outlined"
@@ -181,7 +194,7 @@ const BlogForm = () => {
           sx={{ mb: 3 }}
           inputProps={{ 'aria-label': 'Post Content' }}
         />
-
+  
         <TextField
           label="Author's Name"
           variant="outlined"
@@ -192,7 +205,7 @@ const BlogForm = () => {
           sx={{ mb: 3 }}
           inputProps={{ 'aria-label': "Author's Name" }}
         />
-
+  
         <TextField
           label="Post Summary (Alt Text for Post)"
           variant="outlined"
@@ -203,7 +216,7 @@ const BlogForm = () => {
           sx={{ mb: 3 }}
           inputProps={{ 'aria-label': 'Post Summary' }}
         />
-
+  
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel htmlFor="image-upload">Upload Image</InputLabel>
           <Button
@@ -223,7 +236,7 @@ const BlogForm = () => {
           </Button>
           {image && <FormHelperText>{image.name}</FormHelperText>}
         </FormControl>
-
+  
         <TextField
           label="Image Alt Text"
           variant="outlined"
@@ -233,28 +246,38 @@ const BlogForm = () => {
           sx={{ mb: 3 }}
           inputProps={{ 'aria-label': 'Image Alt Text' }}
         />
-
-    {imagePreview && (
-        <Box sx={{ mb: 3, display: 'inline-block' }}>
-          <img
-            src={imagePreview}
-            alt="Selected"
-            style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }}
-    />
-  </Box>
-)}
-
-
-        <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+  
+        {imagePreview && (
+          <Box sx={{ mb: 3, display: 'inline-block' }}>
+            <img
+              src={imagePreview}
+              alt="Selected"
+              style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }}
+            />
+          </Box>
+        )}
+  
+        <Box sx={{ position: 'relative', display: 'inline-flex', gap: 2 }}>
           <Button
             type="submit"
             variant="contained"
             color="primary"
             disabled={loading}
-            aria-label="Add Post"
+            aria-label={post ? 'Update Post' : 'Add Post'}
           >
-            Add Post
+            {post ? 'Update Post' : 'Add Post'}
           </Button>
+          {post && (
+            <Button
+              variant="outlined"
+              onClick={() => {
+                // Logic to cancel editing (if needed)
+              }}
+              aria-label="Cancel Edit"
+            >
+              Cancel
+            </Button>
+          )}
           {loading && (
             <CircularProgress
               size={24}
@@ -270,9 +293,9 @@ const BlogForm = () => {
             />
           )}
         </Box>
-      </Card>
+      </Card> {/* Closing the Card here */}
     </Box>
-  );
+  );  
 };
 
 export default BlogForm;
