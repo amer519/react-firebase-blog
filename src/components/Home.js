@@ -8,7 +8,6 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Button,
   Card,
   CardMedia,
   CardContent,
@@ -34,7 +33,7 @@ const Home = () => {
           setBlogs(fetchedBlogs);
         } else {
           setError('No blog posts found.');
-        }        
+        }
       } catch (err) {
         console.error('Error fetching latest blog:', err);
         setError('Failed to fetch the latest blog post.');
@@ -61,16 +60,21 @@ const Home = () => {
       </Alert>
     );
   }
+
   if (!blogs.length) {
     return null;
   }
-  
+
   return (
     <Box sx={{ mt: 4, mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
       {blogs.map((blog) => (
-        <Card key={blog.id} sx={{ boxShadow: 3, flex: 1 }}>
-          {blog.imageUrl && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+        <Link 
+          to={`/blogs/${blog.id}`} 
+          key={blog.id} 
+          style={{ textDecoration: 'none', flex: 1 }}
+        >
+          <Card sx={{ boxShadow: 3, height: '100%', cursor: 'pointer' }}>
+            {blog.imageUrl && (
               <CardMedia
                 component="img"
                 image={blog.imageUrl}
@@ -84,32 +88,23 @@ const Home = () => {
                   borderRadius: 1,
                 }}
               />
-            </Box>
-          )}
-          <CardContent>
-            <Typography variant="h4" component="h2" fontFamily="Century Gothic" gutterBottom>
-              {blog.title}
-            </Typography>
-            <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
-              <Divider sx={{ borderBottomWidth: 2 }} />
-            </Box>
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
-            </Typography>
-            <ReactMarkdown>
-              {blog.content.length > 200 ? `${blog.content.substring(0, 200)}...` : blog.content}
-            </ReactMarkdown>
-            <Button
-              component={Link}
-              to={`/blogs/${blog.id}`}
-              variant="contained"
-              color="primary"
-              aria-label="Read More"
-            >
-              Read More
-            </Button>
-          </CardContent>
-        </Card>
+            )}
+            <CardContent>
+              <Typography variant="h4" component="h2" fontFamily="Century Gothic" gutterBottom>
+                {blog.title.length > 50 ? `${blog.title.substring(0, 50)}...` : blog.title}
+              </Typography>
+              <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+                <Divider sx={{ borderBottomWidth: 2 }} />
+              </Box>
+              <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
+              </Typography>
+              <ReactMarkdown>
+                {blog.content.length > 200 ? `${blog.content.substring(0, 200)}...` : blog.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </Link>
       ))}
     </Box>
   );  
