@@ -328,7 +328,7 @@ const BlogPage = () => {
                           />
                         )}
                         <Typography variant="body1" fontWeight="bold" fontFamily="Century Gothic">
-                          {relatedBlog.title}
+                          {relatedBlog.title.length > 25 ? `${relatedBlog.title.substring(0, 25)}...` : relatedBlog.title}
                         </Typography>
                       </Box>
                     </Link>
