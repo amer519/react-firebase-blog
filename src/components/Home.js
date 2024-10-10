@@ -66,14 +66,33 @@ const Home = () => {
   }
 
   return (
-    <Box sx={{ mt: 4, mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+    <Box 
+  sx={{ 
+    mt: 4, 
+    mb: 4, 
+    display: 'flex', 
+    flexDirection: { xs: 'column', md: 'row' }, 
+    gap: 3, 
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }}
+>
       {blogs.map((blog) => (
         <Link 
           to={`/blogs/${blog.id}`} 
           key={blog.id} 
           style={{ textDecoration: 'none', flex: 1 }}
         >
-          <Card sx={{ boxShadow: 3, height: '100%', cursor: 'pointer' }}>
+          <Card 
+  sx={{ 
+    boxShadow: 3, 
+    height: '100%', 
+    cursor: 'pointer', 
+    width: { xs: '100%', md: '350px' }, // Fixed consistent width
+    maxWidth: 350, // Prevents the card from stretching too much
+  }}
+>
             {blog.imageUrl && (
               <CardMedia
                 component="img"
