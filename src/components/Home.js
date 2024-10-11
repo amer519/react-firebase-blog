@@ -14,6 +14,7 @@ import {
   Divider
 } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+import removeMarkdown from 'remove-markdown';
 
 const Home = () => {
   const [blogs, setBlogs] = useState([]);
@@ -99,29 +100,29 @@ const Home = () => {
                 image={blog.imageUrl}
                 alt={blog.title}
                 sx={{
-                  width: 'auto',
-                  maxWidth: '100%',
-                  height: 'auto',
-                  maxHeight: { xs: 300, md: 500 },
-                  objectFit: 'contain',
+                  width: '100%',
+                  height: 200, // Set a fixed height
+                  objectFit: 'cover', // Ensures the image covers the area
                   borderRadius: 1,
                 }}
               />
             )}
-            <CardContent>
-              <Typography variant="h4" component="h2" fontFamily="Century Gothic" gutterBottom>
-                {blog.title.length > 50 ? `${blog.title.substring(0, 50)}...` : blog.title}
-              </Typography>
-              <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
-                <Divider sx={{ borderBottomWidth: 2 }} />
-              </Box>
-              <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
-              </Typography>
-              <ReactMarkdown>
-                {blog.content.length > 200 ? `${blog.content.substring(0, 200)}...` : blog.content}
-              </ReactMarkdown>
-            </CardContent>
+              <CardContent>
+                <Typography variant="h4" component="h2" fontFamily="Century Gothic" gutterBottom>
+                  {blog.title.length > 50 ? `${blog.title.substring(0, 50)}...` : blog.title}
+                </Typography>
+                <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+                  <Divider sx={{ borderBottomWidth: 2 }} />
+                </Box>
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                  By {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
+                </Typography>
+                <ReactMarkdown>
+                {removeMarkdown(blog.content).length > 200
+                  ? `${removeMarkdown(blog.content).substring(0, 200)}...`
+                  : removeMarkdown(blog.content)}
+                </ReactMarkdown>
+              </CardContent>
           </Card>
         </Link>
       ))}
