@@ -13,6 +13,7 @@
     "bad-words": "^4.0.0",
     "browser-image-compression": "^2.0.2",
     "firebase": "^10.14.0",
+    "firebase-admin": "^12.6.0",
     "gray-matter": "^4.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -29,7 +30,6 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate-sitemap": "node generate-sitemap.js"
-    
   },
   "eslintConfig": {
     "extends": [
