@@ -27,6 +27,7 @@ const BlogForm = ({ post }) => {
   const [imagePreview, setImagePreview] = useState(post ? post.imageUrl : null);
   const [imageAlt, setImageAlt] = useState(post ? post.imageAlt : ''); 
   const [postSummary, setPostSummary] = useState(post ? post.postSummary : '');
+  const [videoId, setVideoId] = useState(post ? post.videoId : '');
 
   // States for handling loading, success, and error messages
   const [loading, setLoading] = useState(false);
@@ -107,6 +108,7 @@ const BlogForm = ({ post }) => {
         imageUrl: imageUrl || '',
         imageAlt: imageAlt.trim(),
         postSummary: postSummary.trim(),
+        videoId: videoId.trim(),
         updatedAt: serverTimestamp(),
       };
   
@@ -133,6 +135,7 @@ const BlogForm = ({ post }) => {
       setImagePreview(null);
       setImageAlt('');
       setPostSummary('');
+      setVideoId('');
   
       e.target.reset();
     } catch (err) {
@@ -246,6 +249,17 @@ const BlogForm = ({ post }) => {
           sx={{ mb: 3 }}
           inputProps={{ 'aria-label': 'Image Alt Text' }}
         />
+
+        <TextField
+          label="YouTube Video ID"
+          variant="outlined"
+          fullWidth
+          value={videoId}
+          onChange={(e) => setVideoId(e.target.value)}
+          sx={{ mb: 3 }}
+          inputProps={{ 'aria-label': 'YouTube Video ID' }}
+        />
+
   
         {imagePreview && (
           <Box sx={{ mb: 3, display: 'inline-block' }}>
