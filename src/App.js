@@ -14,6 +14,37 @@ import theme from './theme'; // Import your theme
 import './App.css';
 import { AuthProvider, useAuth } from './contexts/AuthContext'; // Import Auth context provider
 
+
+// // Export RoutesList for sitemap generation
+// export const RoutesList = (
+//   <Routes>
+//     {/* Home Route - Displays Latest Blog */}
+//     <Route path="/" element={<Home />} />
+
+//     {/* Login Route - Accessed via Footer Admin Login */}
+//     <Route path="/login" element={<Login />} />
+
+//     {/* Blog List Route */}
+//     <Route path="/blogs" element={<BlogList />} />
+
+//     {/* Individual Blog Page Route */}
+//     <Route path="/blogs/:id" element={<BlogPage />} />
+
+//     {/* Protected Create Post Route - Accessible Only to Authenticated Users */}
+//     <Route
+//       path="/create"
+//       element={
+//         <ProtectedRoute>
+//           <BlogForm />
+//         </ProtectedRoute>
+//       }
+//     />
+
+//     {/* Redirect Unknown Routes to Home */}
+//     <Route path="*" element={<Navigate to="/" replace />} />
+//   </Routes>
+// );
+
 const App = () => {
   return (
     <ThemeProvider theme={theme}>
