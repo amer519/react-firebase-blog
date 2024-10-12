@@ -25,6 +25,7 @@ import IconButton from '@mui/material/IconButton'; // For the button functionali
 import { useAuth } from '../contexts/AuthContext';  // Import your custom hook
 import { analytics } from '../firebase'; // Import the initialized analytics
 import { logEvent } from 'firebase/analytics'; // Import the logEvent function
+import YouTube from 'react-youtube';
 
 const BlogPage = () => {
   const { id } = useParams(); // Get blog ID from URL
@@ -338,8 +339,37 @@ const BlogPage = () => {
             ) : (
               <Typography variant="body2">No related posts available.</Typography>
             )}
-          </Paper>
+
+              {/* New YouTube Component Section */}
+              <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
+                <Divider sx={{ borderBottomWidth: 2 }} />
+              </Box>
+
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h6" gutterBottom>
+        Featured Video
+      </Typography>
+      <Box sx={{ position: 'relative', paddingTop: '56.25%' /* 16:9 Aspect Ratio */ }}>
+        <iframe
+          src={`https://www.youtube.com/embed/${blog.videoId}`}
+          frameBorder="0"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+          title="Featured Video"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      </Box>
+    </Box>
+
+    </Paper>
         </Grid>
+
       </Grid>
     </Container>
   );
