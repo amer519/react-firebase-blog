@@ -1,11 +1,9 @@
-// generate-sitemap.js
 const fs = require('fs');
 const path = require('path');
 const { SitemapStream, streamToPromise } = require('sitemap');
 const { Readable } = require('stream');
 const admin = require('firebase-admin');
 require('dotenv').config(); // Load environment variables
-
 
 // Initialize Firebase Admin SDK using environment variables
 admin.initializeApp({
@@ -26,14 +24,19 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-// Function to fetch all blog IDs from Firestore
-const fetchBlogIDs = async () => {
-  const snapshot = await db.collection('posts').get(); // Ensure 'blogs' is your correct collection name
-  const ids = [];
-  snapshot.forEach((doc) => {
-    ids.push(doc.id);
-  });
-  return ids;
+// Function to fetch all blog post IDs from Firestore
+const fetchPostIDs = async () => {
+  try {
+    const snapshot = await db.collection('posts').get(); // Use 'posts' collection
+    const ids = [];
+    snapshot.forEach((doc) => {
+      ids.push(doc.id);
+    });
+    return ids;
+  } catch (error) {
+    console.error('Error fetching post IDs:', error);
+    throw error; // Ensure the error propagates
+  }
 };
 
 // Define your static routes
@@ -48,8 +51,8 @@ const staticRoutes = [
 // Generate sitemap
 const generateSitemap = async () => {
   try {
-    const blogIDs = await fetchBlogIDs();
-    const dynamicRoutes = blogIDs.map((id) => `/posts/${id}`);
+    const postIDs = await fetchPostIDs();
+    const dynamicRoutes = postIDs.map((id) => `/blogs/${id}`); // Ensure correct frontend route
 
     // Define your base URL
     const hostname = 'https://iamsimba.co'; // Replace with your actual domain
@@ -77,18 +80,20 @@ const generateSitemap = async () => {
       data.toString()
     );
 
-    // Ensure the public directory exists
-    const publicDir = path.resolve(__dirname, 'public');
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir);
+    // Ensure the build directory exists
+    const buildDir = path.resolve(__dirname, 'build');
+    if (!fs.existsSync(buildDir)) {
+      fs.mkdirSync(buildDir);
     }
 
-    // Write the sitemap.xml file
-    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), xmlString);
+    // Write the sitemap.xml file to the build directory
+    fs.writeFileSync(path.join(buildDir, 'sitemap.xml'), xmlString);
     console.log('Sitemap generated successfully!');
   } catch (error) {
     console.error('Error generating sitemap:', error);
+    throw error; // Ensure the build fails if sitemap generation fails
   }
 };
 
+// Run the sitemap generation function
 generateSitemap();
