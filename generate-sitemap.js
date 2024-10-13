@@ -25,19 +25,19 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // Function to fetch all blog post IDs from Firestore
-const fetchPostIDs = async () => {
-  try {
-    const snapshot = await db.collection('posts').get(); // Use 'posts' collection
-    const ids = [];
-    snapshot.forEach((doc) => {
-      ids.push(doc.id);
-    });
-    return ids;
-  } catch (error) {
-    console.error('Error fetching post IDs:', error);
-    throw error; // Ensure the error propagates
-  }
-};
+// const fetchPostIDs = async () => {
+//   try {
+//     const snapshot = await db.collection('posts').get(); // Use 'posts' collection
+//     const ids = [];
+//     snapshot.forEach((doc) => {
+//       ids.push(doc.id);
+//     });
+//     return ids;
+//   } catch (error) {
+//     console.error('Error fetching post IDs:', error);
+//     throw error; // Ensure the error propagates
+//   }
+// };
 
 // Define your static routes
 const staticRoutes = [
@@ -51,8 +51,8 @@ const staticRoutes = [
 // Generate sitemap
 const generateSitemap = async () => {
   try {
-    const postIDs = await fetchPostIDs();
-    const dynamicRoutes = postIDs.map((id) => `/blogs/${id}`); // Ensure correct frontend route
+    // const postIDs = await fetchPostIDs();
+    // const dynamicRoutes = postIDs.map((id) => `/blogs/${id}`); // Ensure correct frontend route
 
     // Define your base URL
     const hostname = 'https://iamsimba.co'; // Replace with your actual domain
@@ -64,13 +64,13 @@ const generateSitemap = async () => {
       priority: 0.8,
     }));
 
-    dynamicRoutes.forEach((route) => {
-      links.push({
-        url: route,
-        changefreq: 'monthly',
-        priority: 0.7,
-      });
-    });
+    // dynamicRoutes.forEach((route) => {
+    //   links.push({
+    //     url: route,
+    //     changefreq: 'monthly',
+    //     priority: 0.7,
+    //   });
+    // });
 
     // Create a stream to write to sitemap.xml
     const stream = new SitemapStream({ hostname });
