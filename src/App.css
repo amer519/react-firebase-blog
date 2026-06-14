@@ -1,32 +1,13 @@
-/* Updated header styles */
-.App-header {
-  background-color: #282c34;  /* Dark background */
-  padding: 20px;
+/* All layout is handled via MUI + inline sx props. This file holds only structural CSS that can't live in MUI. */
+
+.page-wrapper {
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 80px; /* Reasonable height for header */
-  color: white;
+  flex-direction: column;
+  background-color: #08080f;
 }
 
-.App-title {
-  font-size: 2rem;
-  font-weight: bold;
-  text-decoration: none;
-  color: white;
-}
-
-.App-footer {
-  background-color: #282c34;
-  color: white;
-  text-align: right;
-  padding: 5px;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-}
-
-.Admin-login {
-  color: white;
-  text-decoration: none;
+.page-content {
+  flex: 1;
+  padding-bottom: 80px;
 }

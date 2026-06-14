@@ -1,123 +1,194 @@
-// src/theme.js
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#1976d2', // Customize your primary color
+      main: '#8b5cf6',
+      light: '#a78bfa',
+      dark: '#6d28d9',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#dc004e', // Customize your secondary color
+      main: '#f59e0b',
+      light: '#fbbf24',
+      dark: '#d97706',
+      contrastText: '#000000',
     },
     background: {
-      default: '#f5f5f5', // Light gray background
-      paper: '#ffffff', // White background for paper components
+      default: '#08080f',
+      paper: '#0f0f1a',
     },
     text: {
-      primary: '#333333', // Dark text for better readability
-      secondary: '#555555',
+      primary: '#f1f5f9',
+      secondary: '#64748b',
     },
+    divider: '#1e1e30',
+    error: { main: '#ef4444' },
+    success: { main: '#10b981' },
+    info: { main: '#06b6d4' },
   },
   typography: {
-    fontFamily: 'Poppins, Roboto, sans-serif', // Use Poppins with fallback to Roboto
-    h3: {
-      fontFamily: 'Poppins, sans-serif',
+    fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
+    h1: {
+      fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 700,
-      marginBottom: '1rem',
+      letterSpacing: '-0.03em',
+    },
+    h2: {
+      fontFamily: '"Space Grotesk", sans-serif',
+      fontWeight: 700,
+      letterSpacing: '-0.02em',
+    },
+    h3: {
+      fontFamily: '"Space Grotesk", sans-serif',
+      fontWeight: 600,
+      letterSpacing: '-0.02em',
     },
     h4: {
-      fontFamily: 'Poppins, sans-serif',
+      fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 600,
-      marginBottom: '0.75rem',
+      letterSpacing: '-0.01em',
+    },
+    h5: {
+      fontFamily: '"Space Grotesk", sans-serif',
+      fontWeight: 600,
+    },
+    h6: {
+      fontFamily: '"Space Grotesk", sans-serif',
+      fontWeight: 600,
     },
     body1: {
-      fontFamily: 'Poppins, sans-serif',
+      fontFamily: '"Inter", sans-serif',
+      lineHeight: 1.75,
+      fontSize: '1rem',
+    },
+    body2: {
+      fontFamily: '"Inter", sans-serif',
       lineHeight: 1.6,
+      fontSize: '0.875rem',
     },
     button: {
-      fontFamily: 'Poppins, sans-serif',
-      textTransform: 'none', // Prevent uppercase transformation
-      fontWeight: 500, // Slightly bold for button text
-      borderRadius: '8px', // Rounded corners for a modern look
+      fontFamily: '"Space Grotesk", sans-serif',
+      textTransform: 'none',
+      fontWeight: 600,
+      letterSpacing: '0.01em',
     },
+    overline: {
+      fontFamily: '"Space Grotesk", sans-serif',
+      fontWeight: 600,
+      letterSpacing: '0.12em',
+      fontSize: '0.7rem',
+    },
+  },
+  shape: {
+    borderRadius: 12,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
-          padding: '10px 20px', // Sleek padding for buttons
-          transition: 'background-color 0.3s ease', // Smooth hover effect
+          borderRadius: '10px',
+          padding: '10px 22px',
+          fontWeight: 600,
+          fontSize: '0.875rem',
+          transition: 'all 0.2s ease',
+        },
+        containedPrimary: {
+          background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+          boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
+          '&:hover': {
+            boxShadow: '0 6px 28px rgba(139, 92, 246, 0.5)',
+            transform: 'translateY(-1px)',
+          },
+        },
+        containedSecondary: {
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          boxShadow: '0 4px 20px rgba(245, 158, 11, 0.3)',
+          '&:hover': {
+            boxShadow: '0 6px 28px rgba(245, 158, 11, 0.5)',
+            transform: 'translateY(-1px)',
+          },
+        },
+        outlined: {
+          borderColor: '#1e1e30',
+          '&:hover': {
+            borderColor: '#8b5cf6',
+            background: 'rgba(139, 92, 246, 0.06)',
+          },
         },
       },
     },
-    MuiTypography: {
-      defaultProps: {
-        variantMapping: {
-          h1: 'h1',
-          h2: 'h2',
-          h3: 'h3',
-          h4: 'h4',
-          body1: 'p', // Ensures semantic HTML tags for text
-        },
-      },
-      styleOverrides: {
-        h3: {
-          fontSize: '2.5rem', // Make h3 bold and modern
-          color: '#333333', // Add primary color to header elements
-        },
-        body1: {
-          fontSize: '1rem', // Standard body font size
-          lineHeight: 1.8, // Improved readability
-        },
-      },
-    },
-    MuiLink: {
+    MuiCard: {
       styleOverrides: {
         root: {
-          textDecoration: 'none',
-          color: '#ffffff', // Make links in the header white
-          fontWeight: 'bold',
-          fontSize: '1.5rem',
-          letterSpacing: '1px',
+          background: '#0f0f1a',
+          border: '1px solid #1e1e30',
+          borderRadius: '16px',
+          boxShadow: 'none',
+          transition: 'all 0.25s ease',
           '&:hover': {
-            color: '#eeeeee', // Light hover effect
+            borderColor: '#2d2d45',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
           },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"Space Grotesk", sans-serif',
+          fontWeight: 600,
+          fontSize: '0.7rem',
+          letterSpacing: '0.05em',
+          borderRadius: '6px',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '10px',
+            background: '#14141f',
+            '& fieldset': {
+              borderColor: '#1e1e30',
+            },
+            '&:hover fieldset': {
+              borderColor: '#2d2d45',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#8b5cf6',
+            },
+          },
+          '& .MuiInputLabel-root.Mui-focused': {
+            color: '#8b5cf6',
+          },
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor: '#1e1e30',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          background: '#0f0f1a',
+          border: '1px solid #1e1e30',
         },
       },
     },
     MuiContainer: {
       styleOverrides: {
         root: {
-          padding: '20px',
-        },
-      },
-    },
-    MuiBox: {
-      styleOverrides: {
-        root: {
-          textAlign: 'center',
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          background: 'linear-gradient(90deg, #1976d2, #64b5f6)', // Header gradient
-          boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)', // Subtle shadow for the header
-        },
-      },
-    },
-    MuiFooter: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#282c34',
-          color: 'white',
-          textAlign: 'center',
-          padding: '20px',
-          position: 'fixed',
-          bottom: 0,
-          width: '100%',
+          paddingLeft: '24px',
+          paddingRight: '24px',
         },
       },
     },

@@ -1,31 +1,17 @@
-// src/components/Login.js
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
-import {
-  TextField,
-  Button,
-  Box,
-  CircularProgress,
-  Alert,
-  Typography,
-  Card,
-  CardContent,
-} from '@mui/material';
+import { Box, TextField, Button, Typography, Alert, CircularProgress } from '@mui/material';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // States for handling loading and error messages
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Determine where to redirect after login
   const from = location.state?.from?.pathname || '/';
 
   const handleLogin = async (e) => {
@@ -34,10 +20,10 @@ const Login = () => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate(from, { replace: true }); // Redirect to the intended page
+      navigate(from, { replace: true });
     } catch (err) {
-      console.error('Login Error:', err);
-      setError('Failed to log in. Please check your credentials.');
+      console.error(err);
+      setError('Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -45,74 +31,75 @@ const Login = () => {
 
   return (
     <Box
-      sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}
-      aria-label="Login Form Container"
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'radial-gradient(ellipse at top, rgba(139,92,246,0.08) 0%, transparent 60%)',
+        px: 2,
+      }}
     >
-      <Card sx={{ width: '100%', maxWidth: 400, p: 3, boxShadow: 3 }}>
-        <CardContent>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Admin Login
+      <Box sx={{ width: '100%', maxWidth: 380 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Link to="/">
+            <Box sx={{ fontFamily: '"Space Grotesk"', fontWeight: 700, fontSize: '1.4rem', color: '#f1f5f9', mb: 1 }}>
+              Simba<Box component="span" sx={{ color: '#8b5cf6' }}>Verse</Box>
+            </Box>
+          </Link>
+          <Typography sx={{ color: '#475569', fontSize: '0.875rem' }}>Admin access only</Typography>
+        </Box>
+
+        <Box
+          component="form"
+          onSubmit={handleLogin}
+          sx={{ background: '#0f0f1a', border: '1px solid #1e1e30', borderRadius: '20px', p: 3.5 }}
+        >
+          <Typography variant="h6" sx={{ color: '#f1f5f9', fontFamily: '"Space Grotesk"', mb: 3 }}>
+            Sign In
           </Typography>
 
-          {/* Error Alert */}
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
 
-          <Box component="form" onSubmit={handleLogin}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="Email"
-              variant="outlined"
-              fullWidth
               type="email"
+              label="Email"
+              fullWidth
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 3 }}
-              inputProps={{ 'aria-label': 'Email Address' }}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="email"
             />
             <TextField
-              label="Password"
-              variant="outlined"
-              fullWidth
               type="password"
+              label="Password"
+              fullWidth
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 3 }}
-              inputProps={{ 'aria-label': 'Password' }}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="current-password"
             />
-            <Box sx={{ position: 'relative' }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                disabled={loading}
-                aria-label="Login"
-              >
-                Log In
-              </Button>
-              {loading && (
-                <CircularProgress
-                  size={24}
-                  sx={{
-                    color: 'primary.main',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    marginTop: '-12px',
-                    marginLeft: '-12px',
-                  }}
-                  aria-label="Loading"
-                />
-              )}
-            </Box>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={loading}
+              sx={{ mt: 0.5, py: 1.25 }}
+            >
+              {loading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Sign In'}
+            </Button>
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+
+        <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Link to="/">
+            <Typography sx={{ color: '#475569', fontSize: '0.8rem', '&:hover': { color: '#8b5cf6' } }}>
+              ← Back to site
+            </Typography>
+          </Link>
+        </Box>
+      </Box>
     </Box>
   );
 };

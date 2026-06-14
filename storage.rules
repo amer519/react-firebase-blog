@@ -1,13 +1,18 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read access to all users for all files
+    // Public read for all files
     match /{allPaths=**} {
       allow read: if true;
     }
 
-    // Allow write access only to admin for blog_images/
+    // Admin-only write for blog images
     match /blog_images/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == 'vqwpiGlbosQWkuSkfI5aFXdaAiZ2';
+    }
+
+    // Admin-only write for drop images
+    match /drop_images/{allPaths=**} {
       allow write: if request.auth != null && request.auth.uid == 'vqwpiGlbosQWkuSkfI5aFXdaAiZ2';
     }
   }

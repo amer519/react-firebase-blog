@@ -1,377 +1,406 @@
-// src/components/BlogPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs, addDoc, Timestamp, updateDoc, increment, } from 'firebase/firestore';
-import { db } from '../firebase';
 import {
-  Container,
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  Button,
-  Card,
-  CardMedia,
-  CardContent,
-  CircularProgress,
-  Alert,
-  Divider,
-  TextField,
-  Avatar,
+  doc, getDoc, collection, query, orderBy, limit, getDocs,
+  addDoc, Timestamp, updateDoc, increment,
+} from 'firebase/firestore';
+import { db, analytics } from '../firebase';
+import { logEvent } from 'firebase/analytics';
+import {
+  Box, Container, Grid, Typography, Button, CircularProgress,
+  TextField, Avatar, Chip, Divider,
 } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import { Filter } from 'bad-words';
-import IconButton from '@mui/material/IconButton'; // For the button functionality
-import { useAuth } from '../contexts/AuthContext';  // Import your custom hook
-import { analytics } from '../firebase'; // Import the initialized analytics
-import { logEvent } from 'firebase/analytics'; // Import the logEvent function
-import YouTube from 'react-youtube';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ShareIcon from '@mui/icons-material/Share';
+import EditIcon from '@mui/icons-material/Edit';
+import { useAuth } from '../contexts/AuthContext';
+import ArticleCard from './ArticleCard';
+import NewsletterSignup from './NewsletterSignup';
+
+const CATEGORY_COLORS = {
+  'power-rankings': { bg: 'rgba(139, 92, 246, 0.12)', color: '#a78bfa', label: 'Power Rankings' },
+  'collector-guides': { bg: 'rgba(245, 158, 11, 0.12)', color: '#fbbf24', label: 'Collector Guide' },
+  'nostalgia-vault': { bg: 'rgba(6, 182, 212, 0.12)', color: '#22d3ee', label: 'Nostalgia Vault' },
+  'card-of-the-week': { bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399', label: 'Card of the Week' },
+  'battle-debate': { bg: 'rgba(239, 68, 68, 0.12)', color: '#f87171', label: 'Battle Debate' },
+  'beginner-guides': { bg: 'rgba(99, 102, 241, 0.12)', color: '#818cf8', label: 'Beginner Guide' },
+  'drop-story': { bg: 'rgba(245, 158, 11, 0.12)', color: '#fbbf24', label: 'Drop Story' },
+  'display-setup': { bg: 'rgba(139, 92, 246, 0.12)', color: '#a78bfa', label: 'Display Setup' },
+  'worth-it': { bg: 'rgba(6, 182, 212, 0.12)', color: '#22d3ee', label: 'Worth It?' },
+};
+
+// Renders a full-width article hero image; silently hides itself if the URL returns an error (e.g. 402/403).
+const HeroImage = ({ src, alt }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <Box sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #1e1e30', mb: 4 }}>
+      <Box
+        component="img"
+        src={src}
+        alt={alt}
+        onError={() => setFailed(true)}
+        sx={{ width: '100%', height: 'auto', maxHeight: { xs: 260, md: 440 }, objectFit: 'cover', display: 'block' }}
+      />
+    </Box>
+  );
+};
+
+const estimateReadTime = (content = '') =>
+  Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 200));
 
 const BlogPage = () => {
-  const { id } = useParams(); // Get blog ID from URL
+  const { id } = useParams();
+  const { currentUser } = useAuth();
   const [blog, setBlog] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [relatedBlogs, setRelatedBlogs] = useState([]);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [name, setName] = useState('');
-  const filter = new Filter(); // Initialize bad-words filter
-  const [likes, setLikes] = useState(0);  // State for storing the number of likes
-  const [liked, setLiked] = useState(false); // State to track if the user liked the post
-  const { currentUser } = useAuth();  // Access the currentUser from the AuthContext
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentSuccess, setCommentSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const filter = new Filter();
 
   useEffect(() => {
-    const fetchBlog = async () => {
+    const fetchAll = async () => {
       try {
-        const docRef = doc(db, 'posts', id);
-        const docSnap = await getDoc(docRef);
+        const [docSnap, relSnap, commentSnap] = await Promise.all([
+          getDoc(doc(db, 'posts', id)),
+          getDocs(query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5))),
+          getDocs(query(collection(db, 'posts', id, 'comments'), orderBy('createdAt', 'desc'))),
+        ]);
+
         if (docSnap.exists()) {
-          const blogData = docSnap.data();
-            setBlog({ id: docSnap.id, ...docSnap.data() });
+          setBlog({ id: docSnap.id, ...docSnap.data() });
         } else {
-          setError('No such blog post found.');
+          setError('Article not found.');
         }
+
+        const related = relSnap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(b => b.id !== id)
+          .slice(0, 3);
+        setRelatedBlogs(related);
+        setComments(commentSnap.docs.map(d => d.data()));
       } catch (err) {
-        console.error('Error fetching blog post:', err);
-        setError('Failed to fetch the blog post.');
+        console.error(err);
+        setError('Failed to load article.');
       } finally {
         setLoading(false);
       }
     };
-
-    const fetchRelatedBlogs = async () => {
-      try {
-        const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5)); // Fetch 5 blogs initially
-        const querySnapshot = await getDocs(q);
-        const blogs = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((blog) => blog.id !== id) // Exclude the current blog post from related posts
-          .slice(0, 3); // Limit to 3 related blogs after filtering
-        setRelatedBlogs(blogs);
-      } catch (err) {
-        console.error('Error fetching related blogs:', err);
-      }
-    };
-
-    const fetchComments = async () => {
-      try {
-        const commentsRef = collection(db, 'posts', id, 'comments');
-        const commentsQuery = query(commentsRef, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(commentsQuery);
-        const fetchedComments = querySnapshot.docs.map((doc) => doc.data());
-        setComments(fetchedComments);
-      } catch (err) {
-        console.error('Error fetching comments:', err);
-      }
-    };
-
-    fetchBlog();
-    fetchRelatedBlogs();
-    fetchComments();
+    fetchAll();
   }, [id]);
 
-  const handleCommentSubmit = async () => {
-    const commentData = {
-      name: name || 'Anonymous',
-      comment: filter.clean(newComment), // Use filter to clean the comment
-      createdAt: new Date(),
-    };
-
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setCommentLoading(true);
     try {
       const commentsRef = collection(db, 'posts', id, 'comments');
-
-      // Get the last comment by this user
-    const lastCommentQuery = query(commentsRef, orderBy('createdAt', 'desc'), limit(1));
-    const lastCommentSnapshot = await getDocs(lastCommentQuery);
-
-    let canComment = true;
-
-    if (!lastCommentSnapshot.empty) {
-      const lastComment = lastCommentSnapshot.docs[0].data();
-      const lastCommentTime = lastComment.createdAt.toDate();
-      const currentTime = new Date();
-      const timeDifference = (currentTime - lastCommentTime) / (1000 * 60); // Time difference in minutes
-
-      // Check if the last comment was made within the last 5 minutes
-      if (timeDifference < 5) {
-        canComment = false;
-        alert('You can only comment once every 5 minutes.');
+      const lastSnap = await getDocs(query(commentsRef, orderBy('createdAt', 'desc'), limit(1)));
+      if (!lastSnap.empty) {
+        const lastTime = lastSnap.docs[0].data().createdAt?.toDate?.() || new Date(0);
+        if ((new Date() - lastTime) / 60000 < 5) {
+          alert('You can only comment once every 5 minutes.');
+          setCommentLoading(false);
+          return;
+        }
       }
-    }
-
-    if (canComment) {
       const commentData = {
-        name: name || 'Anonymous',
-        comment: filter.clean(newComment),
-        createdAt: Timestamp.now(),  // Store the current timestamp
+        name: name.trim() || 'Anonymous',
+        comment: filter.clean(newComment.trim()),
+        createdAt: Timestamp.now(),
       };
-      
       await addDoc(commentsRef, commentData);
-      setComments([commentData, ...comments]); // Update the comments list
-      setNewComment(''); // Clear the comment input
-      setName(''); // Clear the name input
-    }
+      setComments(prev => [commentData, ...prev]);
+      setNewComment('');
+      setName('');
+      setCommentSuccess(true);
+      setTimeout(() => setCommentSuccess(false), 3000);
     } catch (err) {
-      console.error('Error adding comment:', err);
+      console.error(err);
+    } finally {
+      setCommentLoading(false);
     }
   };
 
-  const handleLike = async () => {
-    if (!liked) {
-      const postRef = doc(db, 'posts', id);  // Get the post reference from Firestore
-  
-      await updateDoc(postRef, {
-        likes: increment(1),  // Increment the number of likes by 1 in Firestore
-      });
-  
-      setLikes(likes + 1);  // Update the likes count in the component's state
-      setLiked(true);  // Set the liked state to true so the user can't like it again
-    }
-  }; 
-  
-  const handleButtonClick = () => {
-    logEvent(analytics, 'button_click', {
-      button_name: 'Back to Blog List', // Name or label of the button
-      button_type: 'navigation', // Optional: you can add additional details about the event
-    });
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: blog?.title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (_) {}
   };
-  
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress aria-label="Loading" />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh' }}>
+        <CircularProgress sx={{ color: '#8b5cf6' }} />
       </Box>
     );
   }
 
-  if (error) {
+  if (error || !blog) {
     return (
-      <Alert severity="error" sx={{ mt: 4 }}>
-        {error}
-      </Alert>
+      <Box sx={{ pt: 16, textAlign: 'center' }}>
+        <Typography sx={{ color: '#ef4444', fontSize: '1.1rem' }}>{error || 'Article not found.'}</Typography>
+        <Button component={Link} to="/articles" sx={{ mt: 2, color: '#8b5cf6' }}>← Back to Articles</Button>
+      </Box>
     );
   }
 
-  if (!blog) {
-    return null;
-  }
+  const catKey = blog.category || '';
+  const catStyle = CATEGORY_COLORS[catKey] || { bg: 'rgba(100,116,139,0.1)', color: '#94a3b8', label: catKey || 'Article' };
+  const readTime = estimateReadTime(blog.content);
+  const date = blog.createdAt?.toDate?.() || new Date();
+  const tags = blog.tags || [];
 
   return (
-    <Container sx={{ mt: 4, mb: 4 }}>
-      <Grid container spacing={4}>
-        {/* Main Content Area */}
-        <Grid item xs={12} md={8}>
-          {/* Blog Content */}
-          <Card sx={{ boxShadow: 3 }}>
-            {blog.imageUrl && (
-              <CardMedia
-                component="img"
-                image={blog.imageUrl}
-                alt={blog.title}
-                sx={{
-                  width: '100%', // Image will take the full width of its container
-                  height: 'auto', // Height adjusts automatically based on width
-                  maxHeight: { xs: 200, md: 400 }, // Adjusts max-height based on screen size
-                  objectFit: 'cover', // Ensures the image maintains its aspect ratio
-                }}
-              />
-            )}
-            <CardContent>
+    <Box sx={{ pt: { xs: 10, md: 12 }, pb: 8 }}>
+      <Container maxWidth="xl">
+        <Grid container spacing={4}>
+          {/* Main article */}
+          <Grid item xs={12} md={8}>
+            {/* Breadcrumb */}
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 3 }}>
+              <Link to="/articles">
+                <Typography sx={{ color: '#475569', fontSize: '0.8rem', '&:hover': { color: '#8b5cf6' } }}>Articles</Typography>
+              </Link>
+              <Typography sx={{ color: '#2d2d45', fontSize: '0.8rem' }}>›</Typography>
+              {catKey && (
+                <Link to={`/category/${catKey}`}>
+                  <Typography sx={{ color: '#475569', fontSize: '0.8rem', '&:hover': { color: '#8b5cf6' } }}>{catStyle.label}</Typography>
+                </Link>
+              )}
+            </Box>
+
+            {/* Category + Meta */}
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+              {catKey && (
+                <Chip label={catStyle.label} size="small" sx={{ background: catStyle.bg, color: catStyle.color, fontWeight: 700, fontSize: '0.68rem', letterSpacing: '0.05em', border: 'none' }} />
+              )}
+              {blog.featured && <Box component="span" className="simba-pick">⚡ Simba's Pick</Box>}
+            </Box>
+
+            {/* Title */}
             <Typography
-              variant="h3"
-              component="h1"
-              sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '2.0rem', fontFamily: 'Century Gothic' }}
+              variant="h1"
+              sx={{ color: '#f1f5f9', fontSize: { xs: '1.75rem', md: '2.5rem' }, lineHeight: 1.2, mb: 2.5 }}
             >
               {blog.title}
             </Typography>
 
-
-              {/* Horizontal line below the title, spanning across both blog and sidebar */}
-              <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
-                <Divider sx={{ borderBottomWidth: 2 }} />
+            {/* Meta row */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: '#8b5cf6', fontSize: '0.875rem', fontFamily: '"Space Grotesk"', fontWeight: 700 }}>
+                {(blog.author || 'S')[0].toUpperCase()}
+              </Avatar>
+              <Box>
+                <Typography sx={{ color: '#e2e8f0', fontWeight: 600, fontSize: '0.875rem', lineHeight: 1 }}>{blog.author}</Typography>
+                <Typography sx={{ color: '#475569', fontSize: '0.75rem' }}>
+                  {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </Typography>
               </Box>
-              <Typography variant="subtitle1" color="text.secondary" sx={{ textAlign: 'left', mb: 2 }}>
-              By: {blog.author} | {blog.createdAt?.toDate().toLocaleString()}
-              </Typography>
-
-
-              <ReactMarkdown>{blog.content}</ReactMarkdown>
-
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#475569' }}>
+                <AccessTimeIcon sx={{ fontSize: '0.85rem' }} />
+                <Typography sx={{ fontSize: '0.8rem' }}>{readTime} min read</Typography>
+              </Box>
+              <Box sx={{ flex: 1 }} />
               <Button
-                component={Link}
-                to="/blogs"
-                variant="contained"
-                color="primary"
-                aria-label="Back to Blog List"
-                sx={{ mt: 2 }}
-                onClick={handleButtonClick}
+                size="small"
+                startIcon={<ShareIcon fontSize="small" />}
+                onClick={handleShare}
+                sx={{ color: copied ? '#10b981' : '#64748b', fontSize: '0.78rem', '&:hover': { color: '#8b5cf6' } }}
               >
-                Back to Blog List
+                {copied ? 'Copied!' : 'Share'}
               </Button>
-              {/* Like Button */}
-  <IconButton
-    onClick={handleLike}  // Calls the handleLike function when clicked
-    sx={{
-      color: liked ? '#1976d2' : '#999',  // Changes color if liked
-      '&:hover': { color: '#1976d2' },  // Changes color on hover
-    }}
-  >
-    {/* <ThumbUpIcon />  Thumbs up icon */}
-    {/* <span role="img" aria-label="like">👍</span> */}
-  </IconButton>
-
-  {/* Likes Counter */}
-  <Typography variant="body1" sx={{ ml: 1 }}>
-    {/* {likes} */}
-  </Typography>
-            </CardContent>
-          </Card>
-
-          {/* Comment Section */}
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Leave a Comment
-            </Typography>
-            <TextField
-              fullWidth
-              label="Your Name (optional)"
-              variant="outlined"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Your Comment"
-              variant="outlined"
-              multiline
-              rows={4}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <Button variant="contained" color="primary" onClick={handleCommentSubmit}>
-              Submit Comment
-            </Button>
-
-            {/* Display Comments */}
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Comments
-              </Typography>
-              {comments.length > 0 ? (
-                comments.map((comment, index) => (
-                  <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Avatar sx={{ bgcolor: '#1976d2', mr: 2 }}>{comment.name[0]}</Avatar>
-                    <Box>
-                      <Typography variant="subtitle2">{comment.name}</Typography>
-                      <Typography variant="body2">{comment.comment}</Typography>
-                    </Box>
-                  </Box>
-                ))
-              ) : (
-                <Typography>No comments yet. Be the first to comment!</Typography>
+              {currentUser && (
+                <Button
+                  component={Link}
+                  to={`/admin/edit/${id}`}
+                  size="small"
+                  startIcon={<EditIcon fontSize="small" />}
+                  sx={{ color: '#f59e0b', fontSize: '0.78rem', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '8px', px: 1.5, '&:hover': { background: 'rgba(245,158,11,0.08)' } }}
+                >
+                  Edit
+                </Button>
               )}
             </Box>
-          </Box>
-        </Grid>
 
-        {/* Sidebar for Related Posts / Ads */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Related Posts
-            </Typography>
-            <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
-              <Divider sx={{ borderBottomWidth: 2 }} />
-            </Box>
-            {relatedBlogs.length > 0 ? (
-              <ul style={{ padding: 0, listStyle: 'none' }}>
-                {relatedBlogs.map((relatedBlog) => (
-                  <li key={relatedBlog.id} style={{ marginBottom: '16px' }}>
-                    <Link to={`/blogs/${relatedBlog.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {relatedBlog.imageUrl && (
-                          <Box
-                            component="img"
-                            src={relatedBlog.imageUrl}
-                            alt={relatedBlog.title}
-                            sx={{
-                              width: 64,
-                              height: 64,
-                              objectFit: 'cover',
-                              borderRadius: '4px',
-                              marginRight: 2,
-                            }}
-                          />
-                        )}
-                        <Typography variant="body1" fontWeight="bold" fontFamily="Century Gothic">
-                          {relatedBlog.title.length > 25 ? `${relatedBlog.title.substring(0, 25)}...` : relatedBlog.title}
-                        </Typography>
-                      </Box>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <Typography variant="body2">No related posts available.</Typography>
+            {/* Hero image — only renders if src loads; silently omitted if URL fails */}
+            {blog.imageUrl && (
+              <HeroImage src={blog.imageUrl} alt={blog.imageAlt || blog.title} />
+            )}
             )}
 
-              {/* New YouTube Component Section */}
-              <Box sx={{ maxWidth: 'lg', mx: 'auto', mb: 4 }}>
-                <Divider sx={{ borderBottomWidth: 2 }} />
+            {/* Post summary callout */}
+            {blog.postSummary && (
+              <Box
+                sx={{
+                  background: 'rgba(139,92,246,0.07)',
+                  border: '1px solid rgba(139,92,246,0.2)',
+                  borderLeft: '3px solid #8b5cf6',
+                  borderRadius: '0 12px 12px 0',
+                  p: 2.5, mb: 4,
+                }}
+              >
+                <Typography sx={{ color: '#a78bfa', fontSize: '1rem', fontStyle: 'italic', lineHeight: 1.65 }}>
+                  {blog.postSummary}
+                </Typography>
               </Box>
+            )}
 
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h6" gutterBottom>
-        Featured Video
-      </Typography>
-      <Box sx={{ position: 'relative', paddingTop: '56.25%' /* 16:9 Aspect Ratio */ }}>
-        <iframe
-          src={`https://www.youtube.com/embed/${blog.videoId}`}
-          frameBorder="0"
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-          title="Featured Video"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-          }}
-        />
-      </Box>
-    </Box>
+            {/* Article body */}
+            <Box className="article-body">
+              <ReactMarkdown>{blog.content}</ReactMarkdown>
+            </Box>
 
-    </Paper>
+            {/* YouTube embed */}
+            {blog.videoId && (
+              <Box sx={{ mt: 4, mb: 2 }}>
+                <Typography sx={{ color: '#64748b', fontWeight: 600, mb: 1.5, fontFamily: '"Space Grotesk"' }}>Featured Video</Typography>
+                <Box sx={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid #1e1e30', position: 'relative', pt: '56.25%' }}>
+                  <Box
+                    component="iframe"
+                    src={`https://www.youtube.com/embed/${blog.videoId}`}
+                    title="Featured Video"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                  />
+                </Box>
+              </Box>
+            )}
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #1e1e30', display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                <Typography sx={{ color: '#475569', fontSize: '0.8rem', mr: 0.5 }}>Tags:</Typography>
+                {tags.map(tag => (
+                  <Link key={tag} to={`/articles?search=${tag}`}>
+                    <Chip
+                      label={`#${tag}`}
+                      size="small"
+                      sx={{ background: '#14141f', color: '#64748b', border: '1px solid #1e1e30', fontSize: '0.72rem', cursor: 'pointer', '&:hover': { borderColor: '#8b5cf6', color: '#a78bfa' } }}
+                    />
+                  </Link>
+                ))}
+              </Box>
+            )}
+
+            <Divider sx={{ my: 5, borderColor: '#1e1e30' }} />
+
+            {/* Comment section */}
+            <Box>
+              <Typography variant="h5" sx={{ color: '#f1f5f9', fontFamily: '"Space Grotesk"', mb: 3 }}>
+                Comments ({comments.length})
+              </Typography>
+              <Box component="form" onSubmit={handleCommentSubmit} sx={{ mb: 4 }}>
+                <Grid container spacing={1.5}>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      placeholder="Your name (optional)"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={8}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      placeholder="Leave a comment…"
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="small"
+                      disabled={commentLoading || !newComment.trim()}
+                    >
+                      {commentLoading ? 'Posting…' : commentSuccess ? '✓ Posted!' : 'Post Comment'}
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {comments.length === 0 ? (
+                  <Typography sx={{ color: '#475569', fontSize: '0.875rem' }}>
+                    No comments yet. Be the first to drop one.
+                  </Typography>
+                ) : (
+                  comments.map((c, i) => (
+                    <Box
+                      key={i}
+                      sx={{ display: 'flex', gap: 2, p: 2, background: '#0f0f1a', border: '1px solid #1e1e30', borderRadius: '12px' }}
+                    >
+                      <Avatar sx={{ width: 34, height: 34, bgcolor: '#1e1e30', color: '#8b5cf6', fontSize: '0.875rem', fontFamily: '"Space Grotesk"', fontWeight: 700, flexShrink: 0 }}>
+                        {(c.name || 'A')[0].toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography sx={{ color: '#e2e8f0', fontWeight: 600, fontSize: '0.875rem' }}>{c.name || 'Anonymous'}</Typography>
+                        <Typography sx={{ color: '#94a3b8', fontSize: '0.875rem', mt: 0.25, lineHeight: 1.65 }}>{c.comment}</Typography>
+                      </Box>
+                    </Box>
+                  ))
+                )}
+              </Box>
+            </Box>
+          </Grid>
+
+          {/* Sidebar */}
+          <Grid item xs={12} md={4}>
+            <Box sx={{ position: 'sticky', top: 88, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Related posts */}
+              {relatedBlogs.length > 0 && (
+                <Box sx={{ background: '#0f0f1a', border: '1px solid #1e1e30', borderRadius: '16px', p: 2.5 }}>
+                  <Typography sx={{ color: '#f1f5f9', fontFamily: '"Space Grotesk"', fontWeight: 700, mb: 2, fontSize: '0.95rem' }}>
+                    Read Next
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    {relatedBlogs.map(rb => (
+                      <ArticleCard key={rb.id} article={rb} variant="compact" />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Newsletter */}
+              <NewsletterSignup variant="drop" />
+
+              {/* Back link */}
+              <Button
+                component={Link}
+                to="/articles"
+                variant="outlined"
+                fullWidth
+                sx={{ borderColor: '#1e1e30', color: '#64748b', '&:hover': { borderColor: '#8b5cf6', color: '#8b5cf6' } }}
+              >
+                ← Back to Articles
+              </Button>
+            </Box>
+          </Grid>
         </Grid>
-
-      </Grid>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 
