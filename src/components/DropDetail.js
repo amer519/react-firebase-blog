@@ -1,6 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import {
+  Box, Container, Grid, Typography, Button, CircularProgress,
+  Chip, Divider, LinearProgress,
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CountdownTimer from './CountdownTimer';
+import NewsletterSignup from './NewsletterSignup';
 
-// Renders a drop image that silently degrades to a placeholder on error (handles 402/403/network failures).
 const DetailImage = ({ src, alt }) => {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
@@ -20,17 +29,6 @@ const DetailImage = ({ src, alt }) => {
     />
   );
 };
-import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
-import {
-  Box, Container, Grid, Typography, Button, CircularProgress,
-  Chip, Divider, LinearProgress,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CountdownTimer from './CountdownTimer';
-import NewsletterSignup from './NewsletterSignup';
-
 const STATUS_CONFIG = {
   upcoming: { label: 'Dropping Soon', bg: 'rgba(245, 158, 11, 0.12)', color: '#fbbf24', border: 'rgba(245,158,11,0.3)' },
   live: { label: 'Live Now', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399', border: 'rgba(16,185,129,0.3)' },
